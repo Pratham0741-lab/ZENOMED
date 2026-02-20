@@ -258,6 +258,12 @@ This project was created for the RIFT 2026 Hackathon by Shadow Syndicate.
 - [Google Gemini API](https://ai.google.dev/)
 - [VCF Format Specification](https://samtools.github.io/hts-specs/VCFv4.2.pdf)
 
+## 🌐 Links
+
+- [LinkedIn Post](https://www.linkedin.com/feed/update/urn:li:ugcPost:7430429417744752640/)
+- [GitHub Repository](https://github.com/Pratham0741-lab/ZENOMED)
+- [Live Deployed Web Application](https://cozy-beijinho-4221e4.netlify.app/)
+
 ## 📧 Support
 
 For questions or issues, please open an issue in the repository.
