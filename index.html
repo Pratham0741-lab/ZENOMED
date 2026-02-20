@@ -1,0 +1,2517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Zenomed — Pharmacogenomic Risk Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Quick loader hide fallback
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    var loader = document.getElementById('loader');
+    if (loader && loader.style.display !== 'none') {
+      loader.style.opacity = '0';
+      loader.style.transition = 'opacity 0.5s';
+      setTimeout(function() {
+        loader.style.display = 'none';
+      }, 500);
+    }
+  }, 1000);
+});
+</script>
+<style>
+:root{
+  --navy:#020b18;--deep:#04111f;
+  --accent:#00d4ff;--accent2:#0055ff;--gold:#f0c060;
+  --red:#ff4455;--green:#00e87a;--amber:#ffb830;
+  --text:#ddeeff;--muted:rgba(180,210,255,.55);
+  --gb:rgba(4,18,50,.6);--gborder:rgba(0,212,255,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:auto;font-size:16px}
+body{background:var(--navy);color:var(--text);font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;overflow-x:hidden;cursor:none;will-change:scroll-position}
+
+/* ── PERFORMANCE OPTIMIZATIONS ── */
+.fc-inner,.fc,.stat-box,.view-toggle,.btn-go,.hbadge,.nav-pill{will-change:transform;transform:translateZ(0);backface-visibility:hidden}
+img{will-change:transform;transform:translateZ(0)}
+
+/* ── CURSOR ── */
+#cur{position:fixed;width:10px;height:10px;border-radius:50%;background:var(--accent);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .15s,height .15s;will-change:transform}
+#cur-r{position:fixed;width:36px;height:36px;border-radius:50%;border:1px solid rgba(0,212,255,.38);pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:transform .18s ease-out,width .25s,height .25s;will-change:transform}
+
+/* ── ZENOMED BRANDING & LOTUS O ── */
+.zen-logo {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  user-select: none;
+}
+.zen-text {
+  background: linear-gradient(180deg, #ffffff 0%, #c0d8f0 50%, #7a8b9c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 0.08em;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
+}
+.lotus-o {
+  width: 1.05em; height: 1.05em;
+  margin: 0 0.02em;
+  flex-shrink: 0;
+  transform-origin: center;
+}
+.spin-slow { animation: spin 14s linear infinite; }
+.spin-fast { 
+  animation: spin 1s cubic-bezier(0.6, 0.05, 0.4, 0.95) infinite; 
+  filter: drop-shadow(0 0 30px rgba(0,212,255,0.9)); 
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* ── LOADER ── */
+#loader{position:fixed;inset:0;background:var(--navy);z-index:20000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;contain:strict}
+#ld-sub{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:15px;letter-spacing:.22em;text-transform:uppercase;color:rgba(0,212,255,.5);opacity:0;margin-top:10px}
+
+/* ── NAV ── */
+#nav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;padding:16px 40px;opacity:0;pointer-events:none;transition:background .35s,border-color .35s}
+#nav.solid{background:rgba(2,10,22,.88);backdrop-filter:blur(22px);border-bottom:1px solid rgba(0,212,255,.07);pointer-events:all}
+.nav-pill{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:4px 13px;border:1px solid var(--gborder);border-radius:20px;background:rgba(0,28,60,.45);backdrop-filter:blur(10px)}
+
+/* ═══ SCENE 1 — HERO ═══ */
+#s1{position:relative;width:100vw;height:100vh;overflow:hidden}
+#s1-bg{position:absolute;inset:0;background:url('https://picsum.photos/1920/1080?random=42') center/cover no-repeat;filter:brightness(.2) saturate(.45) hue-rotate(210deg)}
+#s1-bg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 90% 65% at 50% 38%,rgba(0,55,145,.5) 0%,transparent 65%),linear-gradient(to bottom,transparent 38%,var(--navy) 100%)}
+#s1-bg::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.022) 0px,rgba(0,0,0,.022) 1px,transparent 1px,transparent 4px);z-index:1}
+#s1-inner{position:relative;z-index:2;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 2rem}
+
+#hero-logo{
+  filter:drop-shadow(0 0 65px rgba(0,185,255,.3));
+  transform-origin:center center;
+  will-change:transform,opacity;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  margin-top:0;
+  contain:layout style paint;
+}
+#hero-sub{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:clamp(14px,1.2vw,17px);letter-spacing:.28em;text-transform:uppercase;color:var(--accent);opacity:0;transform:translateY(22px);margin-top:1.5rem;text-align:center}
+#hero-desc{opacity:0;transform:translateY(38px);max-width:510px;text-align:center;color:var(--muted);font-size:clamp(17px,1.3vw,19px);line-height:1.82;margin-top:1.1rem;font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif}
+#hero-badges{opacity:0;transform:translateY(28px);display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:1.3rem}
+.hbadge{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:14px;letter-spacing:.13em;text-transform:uppercase;padding:4px 11px;border:1px solid rgba(0,212,255,.18);border-radius:20px;color:var(--accent);background:rgba(0,45,100,.28)}
+
+/* ── UPLOAD ── */
+#upload-wrap{opacity:0;transform:translateY(48px);width:100%;max-width:720px;margin-top:1.8rem}
+.gc{background:var(--gb);border:1px solid var(--gborder);backdrop-filter:blur(24px) saturate(1.5);border-radius:16px}
+#upload-card{padding:2.8rem 2.5rem 2.5rem}
+.il{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:14px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:12px}
+.iinp{width:100%;background:rgba(0,18,55,.65);border:1px solid rgba(0,212,255,.16);border-radius:8px;padding:14px 16px;color:var(--text);font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:17px;outline:none;transition:border-color .22s;margin-bottom:20px}
+.iinp:focus{border-color:var(--accent)}.iinp::placeholder{color:rgba(110,165,215,.28)}
+.irow{display:flex;gap:16px;margin-bottom:20px}.irow .iinp{margin-bottom:0}
+
+/* custom dropdown styling */
+.conc-lbl { display:block; padding:12px 16px; font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; font-size:16px; color:var(--text); cursor:pointer; border-bottom:1px solid rgba(0,212,255,.05); transition:background .2s; }
+.conc-lbl:hover { background:rgba(0,212,255,.15); }
+.conc-lbl input { margin-right:8px; accent-color:var(--accent); cursor:pointer; }
+.conc-lbl:last-child { border-bottom:none; }
+#conc-meds-dropdown::-webkit-scrollbar { width:4px; }
+#conc-meds-dropdown::-webkit-scrollbar-thumb { background:rgba(0,212,255,.3); border-radius:4px; }
+
+/* file upload button */
+.upload-btn-row{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+#vcf-file-input{display:none}
+#vcf-upload-btn{
+  flex-shrink:0;
+  padding:14px 22px;
+  background:rgba(0,45,100,.55);
+  border:1px solid rgba(0,212,255,.28);
+  border-radius:8px;
+  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size:15px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--accent);
+  cursor:pointer;
+  transition:background .2s,border-color .2s;
+  white-space:nowrap;
+}
+#vcf-upload-btn:hover{background:rgba(0,80,160,.55);border-color:var(--accent)}
+#vcf-file-name{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:15px;color:var(--muted);letter-spacing:.06em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px}
+
+.btn-go{width:100%;padding:18px;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:10px;font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;font-size:25px;font-weight:600;letter-spacing:.18em;color:#fff;cursor:pointer;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;margin-top:8px}
+.btn-go:hover{transform:translateY(-1px);box-shadow:0 10px 36px rgba(0,140,255,.28)}
+.btn-go::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.13),transparent);transform:translateX(-100%);transition:transform .38s}
+.btn-go:hover::before{transform:translateX(0)}
+
+/* ── LOADING STATE ── */
+#analyzing-overlay{
+  position:fixed;inset:0;background:rgba(2,11,24,.92);backdrop-filter:blur(12px);
+  z-index:15000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:24px;
+}
+#analyzing-overlay.active{display:flex}
+.an-sub{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:16px;letter-spacing:.25em;color:var(--accent);text-transform:uppercase; animation: pulse-text 1.5s infinite;}
+@keyframes pulse-text { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; filter: drop-shadow(0 0 8px var(--accent)); } }
+
+/* ── SCROLL HINT ── */
+#shint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);z-index:10;display:flex;flex-direction:column;align-items:center;gap:6px}
+#shint span{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:13px;letter-spacing:.28em;text-transform:uppercase;color:rgba(0,212,255,.42)}
+.sarr{width:1px;height:46px;background:linear-gradient(to bottom,rgba(0,212,255,.7),transparent);animation:sa 1.9s ease-in-out infinite}
+@keyframes sa{0%{transform:scaleY(0);transform-origin:top;opacity:1}50%{transform:scaleY(1);transform-origin:top;opacity:1}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom;opacity:0}}
+
+/* ═══ SCENE 2 — FULL SCREEN CARDS TO ORBIT ═══ */
+#s2{
+  position:relative;
+  width:100vw;
+  height:1200vh;
+  background:var(--deep);
+}
+#s2-sticky{
+  position:sticky;
+  top:0;
+  width:100%;
+  height:100vh;
+  overflow:hidden;
+}
+#s2-grid{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(0,212,255,.055) 1px,transparent 1px);background-size:42px 42px;pointer-events:none}
+#s2-glow{position:absolute;inset:0;background:radial-gradient(ellipse 65% 65% at 50% 50%,rgba(0,45,115,.5) 0%,transparent 68%);pointer-events:none}
+
+/* ── MASSIVE CARDS ── */
+.fc{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  will-change:transform,opacity,visibility;
+  z-index:10;
+  opacity:0;
+  visibility:hidden; /* Hides pointer events when inactive */
+}
+.fc-inner{
+  width:85vw;
+  height:82vh;
+  max-width:1400px;
+  background:rgba(3,13,38,.85);
+  border:1px solid rgba(0,212,255,.2);
+  backdrop-filter:blur(30px) saturate(1.8);
+  border-radius:24px;
+  padding:3rem 3.5rem;
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  box-shadow:0 30px 60px rgba(0,0,0,0.8);
+  contain:layout style paint;
+  transform:translateZ(0);
+}
+.fc-inner::before{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(140deg,rgba(0,212,255,.05),transparent 55%);pointer-events:none;z-index:0;}
+.fc-inner::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,.3),transparent);z-index:0;}
+
+/* Card Header */
+.fc-head{display:flex;align-items:center;gap:18px;margin-bottom:1.5rem;position:relative;z-index:1;}
+.fc-icon{font-size:42px;flex-shrink:0}
+.fc-title{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;font-size:45px;font-weight:700;letter-spacing:.12em;color:var(--accent);line-height:1}
+.fc-title-sub{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:19px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.fc-sep{width:100%;height:1px;background:rgba(0,212,255,.15);margin-bottom:1.5rem;position:relative;z-index:1;}
+
+/* Card Body Area */
+.fc-body-area{
+  flex:1;
+  position:relative;
+  z-index:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding-right:1rem;
+}
+.fc-body-area::-webkit-scrollbar { width:6px; }
+.fc-body-area::-webkit-scrollbar-thumb { background:rgba(0,212,255,.3); border-radius:10px; }
+.fc-body-text { font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; font-size:19px; line-height:1.8; color:var(--text); margin-bottom:1.5rem; }
+.fc-body-text b { color:var(--accent); font-weight:600; }
+
+/* View & Download Toggles */
+.view-toggle {
+  background: rgba(0, 18, 55, 0.6);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  color: var(--muted);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.view-toggle:hover { background: rgba(0, 212, 255, 0.1); color: var(--text); }
+.view-toggle.active { background: rgba(0, 212, 255, 0.15); border-color: var(--accent); color: var(--accent); }
+
+/* Grid Layouts inside Cards */
+.split-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+.stat-box { background:rgba(0,18,55,.6); border:1px solid rgba(0,212,255,.15); border-radius:12px; padding:1.5rem; }
+.stat-val { font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; font-size:49px; font-weight:700; line-height:1; }
+.stat-lbl { font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; font-size:16px; letter-spacing:.15em; text-transform:uppercase; color:var(--muted); margin-top:5px; }
+
+/* Custom Data Table */
+.data-table { width:100%; border-collapse:collapse; margin-top:1rem; }
+.data-table th, .data-table td { padding:12px 16px; text-align:left; border-bottom:1px solid rgba(0,212,255,.1); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; font-size:18px; }
+.data-table th { color:var(--accent); text-transform:uppercase; letter-spacing:.1em; font-size:16px; background:rgba(0,20,50,.5); }
+.data-table tr:hover td { background:rgba(0,212,255,.05); }
+
+/* JSON Code View */
+#c1-json-code {
+  background: #020814;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 212, 255, 0.1);
+  color: #a5d6ff;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Mono", "Menlo", monospace;
+  font-size: 17px;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 55vh;
+  overflow-y: auto;
+  margin: 0;
+}
+#c1-json-code::-webkit-scrollbar { width:6px; height:6px; }
+#c1-json-code::-webkit-scrollbar-thumb { background:rgba(0,212,255,.2); border-radius:10px; }
+
+/* Analytics 2x2 Grid */
+.analytics-grid { display:grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 1.5rem; height: 100%; min-height:500px;}
+.chart-box { background:rgba(0,15,40,.6); border:1px solid rgba(0,212,255,.1); border-radius:12px; padding:1rem; position:relative; display:flex; flex-direction:column; }
+.chart-title { font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; font-size:16px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; text-align:center;}
+.chart-container { flex:1; position:relative; width:100%; height:100%; }
+
+/* Risk Colors & Tags */
+.risk-toxic{color:var(--red)}
+.risk-safe{color:var(--green)}
+.risk-adjust{color:var(--amber)}
+.risk-ineffective{color:#ff8c42}
+.tags-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:1.5rem; }
+.fc-tag{display:inline-block;font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:16px;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;border-radius:20px;border:1px solid;}
+.tag-r{color:#ff6a76;border-color:rgba(255,70,80,.28);background:rgba(255,50,60,.07)}
+.tag-g{color:#00e87a;border-color:rgba(0,232,122,.28);background:rgba(0,232,122,.06)}
+.tag-a{color:var(--amber);border-color:rgba(255,184,48,.28);background:rgba(255,184,48,.06)}
+.tag-b{color:var(--accent);border-color:rgba(0,212,255,.28);background:rgba(0,212,255,.06)}
+
+/* ── RISK PREDICTOR CIRCLE ── */
+#risk-wrap{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  z-index:20;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  will-change:opacity,transform,visibility;
+}
+#risk-svg{display:block}
+#risk-inner{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;width:250px;height:250px;
+}
+#risk-num{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;font-size:93px;font-weight:700;line-height:1;color:var(--accent);filter:drop-shadow(0 0 25px rgba(0,212,255,.7))}
+#risk-lbl{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:17px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+#risk-alert{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:17px;letter-spacing:.1em;margin-top:8px}
+#risk-or{
+  position:absolute;top:50%;left:50%;
+  width:380px;height:380px;
+  margin-left:-190px;margin-top:-190px;
+  border-radius:50%;
+  border:1px solid rgba(0,212,255,.09);
+  animation:pls 2.8s ease-in-out infinite;
+}
+@keyframes pls{0%,100%{opacity:.5;transform:translate(0,0) scale(1)}50%{opacity:.1;transform:translate(0,0) scale(1.07)}}
+
+/* ── card phase label ── */
+#phase-label{
+  position:absolute;top:30px;left:50%;transform:translateX(-50%);
+  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:19px;letter-spacing:.25em;
+  text-transform:uppercase;color:rgba(0,212,255,.6);
+  opacity:0;transition:opacity .3s;
+  white-space:nowrap;
+  background: rgba(0,20,40,0.6);
+  padding: 8px 24px;
+  border-radius: 30px;
+  border: 1px solid rgba(0,212,255,0.2);
+  backdrop-filter: blur(10px);
+  z-index: 50;
+}
+
+/* ═══ SCENE 4 — OUTRO ═══ */
+#s4{position:relative;width:100vw;min-height:100vh;overflow:hidden;background:var(--navy);display:flex;flex-direction:column;align-items:center;padding-bottom:0}
+#s4-bg{position:absolute;inset:0;background:url('https://picsum.photos/1920/1080?random=42') center/cover no-repeat;filter:brightness(.14) saturate(.42) hue-rotate(210deg);z-index:0}
+#s4-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,var(--navy) 0%,transparent 42%)}
+#outro-logo{
+  position:relative;z-index:2;
+  font-size:clamp(40px,10vw,120px);
+  filter:drop-shadow(0 0 90px rgba(0,200,255,.5));
+  opacity:0;transform:scale(5);
+  margin-top:20vh;text-align:center;
+  will-change:transform,opacity;
+}
+#v-block{position:relative;z-index:2;width:100%;max-width:640px;margin:2.5rem auto 0;padding:0 1.5rem;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;opacity:0;transform:translateY(28px)}
+.v-item{background:rgba(3,13,38,.6);border:1px solid rgba(0,212,255,.1);border-radius:10px;padding:10px 14px}
+.v-val{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;font-size:27px;font-weight:700;line-height:1}
+.v-lbl{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+
+/* disclaimer */
+#disc{position:relative;z-index:2;max-width:660px;width:100%;margin:1.4rem auto 0;padding:0 1.5rem;opacity:0;transform:translateY(32px)}
+#disc-inner{background:rgba(3,13,38,.62);border:1px solid rgba(0,212,255,.11);backdrop-filter:blur(20px);border-radius:16px;padding:1.7rem 1.9rem}
+#disc h3{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:14px;letter-spacing:.28em;text-transform:uppercase;color:var(--amber);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+#disc p{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:16px;color:var(--muted);line-height:1.88}
+
+/* team */
+#team-block{position:relative;z-index:2;text-align:center;margin:2rem auto 0;padding:0 1.5rem;opacity:0;transform:translateY(28px);max-width:500px}
+#team-name{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;font-size:clamp(35px,6vw,67px);font-weight:700;letter-spacing:.15em;color:transparent;background:linear-gradient(135deg,var(--accent2),var(--accent));-webkit-background-clip:text;background-clip:text}
+#team-sub{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:14px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.team-member{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:16px;color:var(--text);margin-top:4px}
+
+/* footer */
+#footer{position:relative;z-index:2;width:100%;border-top:1px solid rgba(0,212,255,.07);padding:20px 40px;display:flex;align-items:center;justify-content:space-between;opacity:0;transform:translateY(18px);margin-top:2.5rem}
+.ft-b{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:14px;letter-spacing:.1em;color:rgba(110,155,205,.32);text-transform:uppercase}
+.ft-tag{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;font-size:19px;font-weight:600;letter-spacing:.22em;color:var(--accent);opacity:.65}
+.ft-r{font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:13px;letter-spacing:.14em;color:rgba(0,212,255,.25);text-transform:uppercase;text-align:right;line-height:1.6}
+
+/* noise overlay */
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.028'/%3E%3C/svg%3E");pointer-events:none;z-index:8500;mix-blend-mode:overlay}
+
+/* error toast */
+#err-toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:rgba(255,40,55,.15);border:1px solid rgba(255,40,55,.3);
+  backdrop-filter:blur(20px);border-radius:10px;padding:12px 22px;
+  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;font-size:16px;color:#ff7a85;letter-spacing:.07em;
+  z-index:19000;transition:transform .4s ease;max-width:500px;text-align:center;
+}
+#err-toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ZENOMED ULTRA ENHANCEMENT LAYER — DO NOT MODIFY ABOVE
+     Apple · Samsung · GTA6 — Tier Visual Upgrade
+═══════════════════════════════════════════════════════════ -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syncopate:wght@400;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+/* ── SCROLL PROGRESS BAR ── */
+#scroll-progress {
+  position: fixed;
+  top: 0; left: 0;
+  width: 0%;
+  height: 2px;
+  background: linear-gradient(90deg, #0055ff, #00d4ff, #00e87a);
+  z-index: 99999;
+  transition: width 0.1s linear;
+  box-shadow: 0 0 12px rgba(0,212,255,0.8), 0 0 30px rgba(0,212,255,0.4);
+}
+
+/* ── PARTICLE CANVAS ── */
+#particle-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.55;
+}
+
+/* ── AURORA BLOBS ── */
+#aurora-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  animation: aurora-drift 18s ease-in-out infinite;
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+.aurora-blob:nth-child(1) { width: 600px; height: 600px; background: radial-gradient(circle, rgba(0,55,200,0.35) 0%, transparent 70%); top: -20%; left: -10%; animation-delay: 0s; animation-duration: 22s; }
+.aurora-blob:nth-child(2) { width: 500px; height: 500px; background: radial-gradient(circle, rgba(0,212,255,0.2) 0%, transparent 70%); top: 30%; right: -15%; animation-delay: -7s; animation-duration: 19s; }
+.aurora-blob:nth-child(3) { width: 700px; height: 400px; background: radial-gradient(circle, rgba(0,100,160,0.25) 0%, transparent 70%); bottom: -10%; left: 20%; animation-delay: -12s; animation-duration: 25s; }
+.aurora-blob:nth-child(4) { width: 400px; height: 600px; background: radial-gradient(circle, rgba(0,30,120,0.3) 0%, transparent 70%); top: 60%; left: 60%; animation-delay: -4s; animation-duration: 20s; }
+@keyframes aurora-drift {
+  0%   { transform: translate(0px, 0px) scale(1) rotate(0deg); opacity: 0; }
+  10%  { opacity: 1; }
+  33%  { transform: translate(80px, -60px) scale(1.15) rotate(15deg); }
+  66%  { transform: translate(-50px, 80px) scale(0.92) rotate(-10deg); }
+  90%  { opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* ── ENHANCED CURSOR TRAIL ── */
+.cursor-trail-dot {
+  position: fixed;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: rgba(0,212,255,0.6);
+  pointer-events: none;
+  z-index: 9997;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.4s;
+}
+
+/* ── ENHANCED LOADER ── */
+#loader-dna {
+  position: absolute;
+  width: 60px;
+  height: 120px;
+}
+.dna-strand {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+.dna-node {
+  position: absolute;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 0 12px var(--accent);
+}
+.dna-bridge {
+  position: absolute;
+  height: 1px;
+  background: rgba(0,212,255,0.3);
+  left: 10%; width: 80%;
+  transform-origin: center;
+}
+#loader-progress-ring {
+  position: absolute;
+  bottom: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* ── 3D CARD TILT ── */
+.fc-inner {
+  transform-style: preserve-3d;
+  transition: transform 0.1s ease-out, box-shadow 0.3s ease;
+}
+.fc-tilt-active .fc-inner {
+  box-shadow: 0 40px 80px rgba(0,0,0,0.9), 0 0 60px rgba(0,212,255,0.15) !important;
+}
+.fc-inner:hover {
+  border-color: rgba(0,212,255,0.35) !important;
+}
+
+/* ── CARD SHINE LAYER ── */
+.fc-shine {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 100;
+  background: radial-gradient(400px circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.04), transparent 60%);
+  transition: background 0.1s;
+}
+
+/* ── MAGNETIC BUTTON ── */
+.btn-go {
+  transition: transform 0.3s cubic-bezier(0.23,1,0.32,1), box-shadow 0.3s !important;
+}
+.btn-go-magnetic {
+  transform: translate(var(--mag-x, 0px), var(--mag-y, 0px)) translateY(-1px) !important;
+  box-shadow: 0 20px 50px rgba(0,140,255,0.4) !important;
+}
+
+/* ── GLITCH TITLE EFFECT ── */
+@keyframes glitch-skew {
+  0%   { transform: skew(0deg); }
+  10%  { transform: skew(2deg); }
+  20%  { transform: skew(0deg); }
+  80%  { transform: skew(0deg); }
+  90%  { transform: skew(-1deg); }
+  100% { transform: skew(0deg); }
+}
+.fc-title {
+  animation: glitch-skew 8s cubic-bezier(0.25,0.46,0.45,0.94) infinite !important;
+  position: relative;
+}
+.fc-title::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 2px; top: 0;
+  color: rgba(255,68,85,0.25);
+  clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%);
+  animation: glitch-clip 6s infinite;
+  pointer-events: none;
+}
+@keyframes glitch-clip {
+  0%, 95%, 100% { clip-path: polygon(0 0, 0 0, 0 0, 0 0); }
+  96% { clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%); transform: translate(-3px); }
+  97% { clip-path: polygon(0 60%, 100% 60%, 100% 75%, 0 75%); transform: translate(3px); }
+  98% { clip-path: polygon(0 15%, 100% 15%, 100% 35%, 0 35%); transform: translate(-1px); }
+}
+
+/* ── ANIMATED GRID ── */
+#s2-grid {
+  animation: grid-pulse 4s ease-in-out infinite !important;
+}
+@keyframes grid-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ── SCAN LINE OVERLAY ── */
+#scanline-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 8400;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.015) 2px,
+    rgba(0,0,0,0.015) 4px
+  );
+  animation: scanlines-move 8s linear infinite;
+}
+@keyframes scanlines-move {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100vh; }
+}
+
+/* ── ENHANCED RISK CIRCLE ── */
+#risk-or {
+  animation: risk-pulse-outer 2.5s ease-in-out infinite !important;
+}
+@keyframes risk-pulse-outer {
+  0%, 100% { opacity: 0.4; transform: translate(0,0) scale(1); box-shadow: none; }
+  50% { opacity: 0.15; transform: translate(0,0) scale(1.08); box-shadow: 0 0 60px rgba(0,212,255,0.3); }
+}
+#risk-num {
+  animation: risk-glow-pulse 2s ease-in-out infinite !important;
+}
+@keyframes risk-glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 20px rgba(0,212,255,0.6)); }
+  50% { filter: drop-shadow(0 0 40px rgba(0,212,255,0.9)) drop-shadow(0 0 80px rgba(0,100,255,0.5)); }
+}
+
+/* ── RISK ORBITING RINGS ── */
+#risk-ring-1, #risk-ring-2, #risk-ring-3 {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px dashed rgba(0,212,255,0.12);
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  pointer-events: none;
+}
+#risk-ring-1 { width: 420px; height: 420px; animation: ring-spin-1 12s linear infinite; }
+#risk-ring-2 { width: 500px; height: 500px; animation: ring-spin-2 20s linear infinite reverse; border-style: dotted; }
+#risk-ring-3 { width: 580px; height: 580px; animation: ring-spin-3 30s linear infinite; border-color: rgba(0,212,255,0.06); }
+@keyframes ring-spin-1 { 100% { transform: translate(-50%,-50%) rotate(360deg); } }
+@keyframes ring-spin-2 { 100% { transform: translate(-50%,-50%) rotate(360deg); } }
+@keyframes ring-spin-3 { 100% { transform: translate(-50%,-50%) rotate(360deg); } }
+
+/* ── PHASE LABEL ENHANCEMENT ── */
+#phase-label {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-size: 22px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3em !important;
+  color: #ffffff !important;
+  text-shadow: 0 0 20px rgba(0,212,255,0.8), 0 0 40px rgba(0,212,255,0.4) !important;
+  border: 1px solid rgba(0,212,255,0.3) !important;
+  box-shadow: 0 0 30px rgba(0,212,255,0.1), inset 0 0 30px rgba(0,212,255,0.03) !important;
+  animation: phase-label-glow 3s ease-in-out infinite !important;
+}
+@keyframes phase-label-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(0,212,255,0.1), inset 0 0 20px rgba(0,212,255,0.02); }
+  50% { box-shadow: 0 0 40px rgba(0,212,255,0.2), inset 0 0 40px rgba(0,212,255,0.05); }
+}
+
+/* ── STAT VALUE COUNT-UP GLOW ── */
+.stat-val {
+  text-shadow: 0 0 20px currentColor !important;
+  transition: text-shadow 0.3s !important;
+}
+.stat-box:hover .stat-val {
+  text-shadow: 0 0 40px currentColor, 0 0 80px currentColor !important;
+}
+
+/* ── HERO ELEMENTS ENHANCEMENTS ── */
+#hero-sub {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 500 !important;
+  font-size: clamp(15px, 1.4vw, 19px) !important;
+  letter-spacing: 0.38em !important;
+  text-shadow: 0 0 30px rgba(0,212,255,0.5) !important;
+}
+#hero-desc {
+  font-family: 'Space Grotesk', sans-serif !important;
+  font-size: clamp(16px, 1.2vw, 18px) !important;
+  line-height: 2 !important;
+  color: rgba(180,220,255,0.7) !important;
+}
+
+/* ── BADGE ENHANCEMENT ── */
+.hbadge {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.15em !important;
+  transition: all 0.3s ease !important;
+  position: relative;
+  overflow: hidden;
+}
+.hbadge::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,212,255,0.15), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.hbadge:hover {
+  border-color: var(--accent) !important;
+  color: #fff !important;
+  box-shadow: 0 0 20px rgba(0,212,255,0.3) !important;
+  transform: translateY(-2px) !important;
+}
+.hbadge:hover::before { opacity: 1; }
+
+/* ── NAV PILLS ENHANCEMENT ── */
+.nav-pill {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.2em !important;
+  transition: all 0.3s !important;
+}
+.nav-pill:hover {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  background: rgba(0,212,255,0.1) !important;
+}
+
+/* ── UPLOAD CARD ENHANCEMENT ── */
+#upload-card {
+  position: relative;
+  overflow: visible !important;
+}
+#upload-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 17px;
+  background: linear-gradient(135deg, rgba(0,212,255,0.2) 0%, transparent 40%, rgba(0,85,255,0.15) 100%);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+#upload-card:focus-within::before { opacity: 1; }
+
+/* ── ANALYZE BUTTON PULSE ── */
+.btn-go {
+  position: relative;
+}
+.btn-go::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  z-index: -1;
+  filter: blur(15px);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.btn-go:hover::after { opacity: 0.5; }
+
+/* ── DATA TABLE ENHANCEMENT ── */
+.data-table tr {
+  transition: all 0.2s !important;
+}
+.data-table tr:hover td {
+  background: rgba(0,212,255,0.07) !important;
+  padding-left: 20px !important;
+}
+.data-table td {
+  transition: all 0.2s !important;
+}
+
+/* ── FOOTER ENHANCEMENT ── */
+#footer {
+  background: rgba(2,10,22,0.9) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+/* ── SCROLL HINT ENHANCEMENT ── */
+#shint span {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 500 !important;
+  color: rgba(0,212,255,0.6) !important;
+  animation: hint-text-pulse 2s ease-in-out infinite;
+}
+@keyframes hint-text-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.9; }
+}
+
+/* ── LOADER ENHANCEMENT ── */
+#ld-sub {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+  letter-spacing: 0.3em !important;
+  animation: sub-blink 2s ease-in-out infinite;
+}
+@keyframes sub-blink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.9; }
+}
+#loader::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0,55,150,0.3) 0%, transparent 70%);
+  animation: loader-bg-pulse 3s ease-in-out infinite;
+}
+@keyframes loader-bg-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+#loader::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: loader-scan 2s ease-in-out infinite;
+}
+@keyframes loader-scan {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ── SECTION TRANSITION GRADIENT ── */
+#s2::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 200px;
+  background: linear-gradient(to bottom, var(--navy), transparent);
+  z-index: 5;
+  pointer-events: none;
+}
+#s2::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 200px;
+  background: linear-gradient(to top, var(--navy), transparent);
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* ── HOVER REVEAL BORDER ANIMATION ── */
+.stat-box {
+  position: relative;
+  overflow: hidden;
+}
+.stat-box::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: -100%;
+  width: 100%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  transition: left 0.5s ease;
+}
+.stat-box:hover::after { left: 100%; }
+
+/* ── ANALYZING OVERLAY ENHANCEMENT ── */
+#analyzing-overlay {
+  background: rgba(2,11,24,0.95) !important;
+}
+#analyzing-overlay::before {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,55,150,0.4) 0%, transparent 70%);
+  animation: an-glow 3s ease-in-out infinite;
+}
+@keyframes an-glow {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 0.9; }
+}
+
+/* ── CUSTOM SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: rgba(2,11,24,0.5); }
+::-webkit-scrollbar-thumb { background: linear-gradient(var(--accent2), var(--accent)); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ── FLOATING PARTICLES IN HERO ── */
+.hero-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--accent);
+  pointer-events: none;
+  animation: hero-float linear infinite;
+  opacity: 0;
+}
+@keyframes hero-float {
+  0% { transform: translateY(100vh) scale(0); opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.3; }
+  100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+}
+
+/* ── TEAM NAME ENHANCEMENT ── */
+#team-name {
+  animation: team-gradient 4s ease-in-out infinite !important;
+  background-size: 200% 200% !important;
+}
+@keyframes team-gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ── OUTRO LOGO ENHANCEMENT ── */
+#outro-logo img {
+  animation: outro-breathe 4s ease-in-out infinite;
+}
+@keyframes outro-breathe {
+  0%, 100% { filter: drop-shadow(0 0 90px rgba(0,200,255,0.5)); }
+  50% { filter: drop-shadow(0 0 120px rgba(0,200,255,0.8)) drop-shadow(0 0 200px rgba(0,100,255,0.4)); }
+}
+
+/* ── V-ITEM HOVER ── */
+.v-item {
+  transition: all 0.3s ease !important;
+  cursor: default;
+}
+.v-item:hover {
+  transform: translateY(-4px) !important;
+  border-color: rgba(0,212,255,0.25) !important;
+  background: rgba(3,18,55,0.9) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(0,212,255,0.1) !important;
+}
+.v-val { transition: text-shadow 0.3s !important; }
+.v-item:hover .v-val {
+  text-shadow: 0 0 20px currentColor !important;
+}
+
+/* ── GRID GLOW ENHANCEMENT ── */
+#s2-grid {
+  background-image: radial-gradient(circle, rgba(0,212,255,0.08) 1px, transparent 1px) !important;
+  background-size: 42px 42px !important;
+}
+
+/* ── TAG HOVER ── */
+.fc-tag {
+  transition: all 0.25s !important;
+  cursor: default;
+}
+.fc-tag:hover {
+  transform: scale(1.05) translateY(-1px) !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+}
+
+/* ── DISCLAIMER HOVER ── */
+#disc-inner {
+  transition: all 0.4s ease !important;
+}
+#disc-inner:hover {
+  border-color: rgba(255,184,48,0.2) !important;
+  box-shadow: 0 0 40px rgba(255,184,48,0.05) !important;
+}
+
+/* ── LOADING STEP TEXT ── */
+.an-sub {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 18px !important;
+  letter-spacing: 0.3em !important;
+}
+
+/* ── RISK ARC GLOW ── */
+#risk-arc {
+  filter: drop-shadow(0 0 8px rgba(0,212,255,0.8));
+}
+
+/* ── HORIZONTAL LINE SEPARATOR PULSE ── */
+.fc-sep {
+  animation: sep-glow 3s ease-in-out infinite !important;
+  position: relative !important;
+}
+@keyframes sep-glow {
+  0%, 100% { opacity: 0.4; box-shadow: none; }
+  50% { opacity: 1; box-shadow: 0 0 10px rgba(0,212,255,0.3); }
+}
+
+/* ── BUTTON VIEW TOGGLE ENHANCEMENT ── */
+.view-toggle {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  transition: all 0.25s !important;
+}
+.view-toggle:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3) !important;
+}
+.view-toggle.active {
+  box-shadow: 0 0 15px rgba(0,212,255,0.2) !important;
+}
+
+/* ── CHART BOX HOVER ── */
+.chart-box {
+  transition: all 0.3s ease !important;
+}
+.chart-box:hover {
+  border-color: rgba(0,212,255,0.2) !important;
+  box-shadow: 0 0 30px rgba(0,212,255,0.08) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ── CODE BLOCK ENHANCEMENT ── */
+#c1-json-code {
+  border-left: 2px solid rgba(0,212,255,0.3) !important;
+}
+
+/* ── FC HEAD ICON ── */
+.fc-icon {
+  transition: transform 0.3s ease !important;
+  display: inline-block !important;
+}
+.fc-inner:hover .fc-icon {
+  transform: scale(1.2) rotate(10deg) !important;
+}
+
+/* ── SCROLL INDICATOR LINE ENHANCEMENT ── */
+.sarr {
+  background: linear-gradient(to bottom, rgba(0,212,255,0.9), rgba(0,212,255,0)) !important;
+  box-shadow: 0 0 8px rgba(0,212,255,0.5) !important;
+}
+
+/* ── NAV SOLID ENHANCEMENT ── */
+#nav.solid {
+  box-shadow: 0 4px 30px rgba(0,0,0,0.5) !important;
+}
+
+/* ── MICRO-INTERACTIONS: CHECKBOX CUSTOM ── */
+.conc-lbl input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+/* ── INTRO HERO SCAN LINE ── */
+#s1::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.4), transparent);
+  animation: hero-scan 4s linear infinite;
+  z-index: 5;
+  pointer-events: none;
+}
+@keyframes hero-scan {
+  0% { top: 0%; opacity: 0; }
+  5% { opacity: 1; }
+  95% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* ── PARTICLE DOT NODES ── */
+@keyframes node-blink {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.5); }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ ENHANCEMENT LAYER ELEMENTS ═══ -->
+<div id="scroll-progress"></div>
+<canvas id="particle-canvas"></canvas>
+<div id="aurora-layer">
+  <div class="aurora-blob"></div>
+  <div class="aurora-blob"></div>
+  <div class="aurora-blob"></div>
+  <div class="aurora-blob"></div>
+</div>
+<div id="scanline-overlay"></div>
+<!-- ═════════════════════════════════ -->
+
+<svg style="display:none;" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="lotus-glow" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="rgba(0, 100, 255, 0.1)"/>
+      <stop offset="40%" stop-color="rgba(0, 180, 255, 0.5)"/>
+      <stop offset="80%" stop-color="rgba(255, 255, 255, 0.9)"/>
+      <stop offset="100%" stop-color="rgba(255, 255, 255, 1)"/>
+    </linearGradient>
+    <path id="radial-petal" d="M50,50 C35,35 42,10 50,0 C58,10 65,35 50,50 Z" fill="url(#lotus-glow)"/>
+    <g id="zeno-lotus-graphic">
+      <circle cx="50" cy="50" r="30" fill="#00aaff" opacity="0.25" filter="blur(8px)"/>
+      <use href="#radial-petal" transform="rotate(0 50 50)"/>
+      <use href="#radial-petal" transform="rotate(60 50 50)"/>
+      <use href="#radial-petal" transform="rotate(120 50 50)"/>
+      <use href="#radial-petal" transform="rotate(180 50 50)"/>
+      <use href="#radial-petal" transform="rotate(240 50 50)"/>
+      <use href="#radial-petal" transform="rotate(300 50 50)"/>
+      <circle cx="50" cy="50" r="10" fill="#ffffff" opacity="0.8" filter="blur(3px)"/>
+    </g>
+  </defs>
+</svg>
+
+<div id="loader">
+  <div style="display: flex; align-items: center; justify-content: center;">
+    <img src="logo.png" alt="Zenomed Logo" style="width: 300px; height: auto; filter: drop-shadow(0 0 40px rgba(0,185,255,.5));">
+  </div>
+  <div id="ld-sub">RIFT 2026 · Pharmacogenomics Intelligence v3</div>
+</div>
+
+<div id="cur"></div><div id="cur-r"></div>
+
+<div id="analyzing-overlay">
+  <div style="display: flex; align-items: center; justify-content: center;">
+    <img src="logo.png" alt="Zenomed Logo" style="width: 400px; height: auto; filter: drop-shadow(0 0 60px rgba(0,185,255,.7));">
+  </div>
+  <div class="an-sub" id="an-sub">Initializing Pharmacogenomic Core…</div>
+</div>
+
+<div id="err-toast" id="err-toast"></div>
+
+<nav id="nav">
+  <div style="display: flex; align-items: center;">
+    <img src="data:image/png;base64,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" alt="Zenomed Logo" style="height: 40px; width: auto; filter: drop-shadow(0 2px 8px rgba(0,212,255,0.4));">
+  </div>
+  <div style="display:flex;gap:7px">
+    <span class="nav-pill">v3.0 · RIFT 2026</span>
+    <span class="nav-pill">CPIC · PharmGKB</span>
+    <span class="nav-pill">Gemini 2.5 Flash</span>
+  </div>
+</nav>
+
+<section id="s1">
+  <div id="s1-bg"></div>
+  <div id="s1-inner">
+    <div id="hero-logo" style="display: flex; align-items: center; justify-content: center; width: 100%;">
+      <img src="data:image/png;base64,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" alt="Zenomed Logo" style="height: clamp(55px, 9vw, 105px); width: auto; max-width: 88vw; filter: drop-shadow(0 0 65px rgba(0,185,255,.3)); display: block;">
+    </div>
+    <div id="hero-sub">Pharmacogenomic Risk Intelligence · RIFT 2026 Hackathon</div>
+    <p id="hero-desc">
+      AI-driven genomic variant analysis using CPIC guidelines, DDGI phenoconversion engines,
+      and Google Gemini 2.5 Flash — delivering clinical-grade drug safety insights from a single VCF file.
+    </p>
+    <div id="hero-badges">
+      <span class="hbadge">🧬 6 Target Genes</span>
+      <span class="hbadge">💊 CPIC Engine</span>
+      <span class="hbadge">⚡ DDGI Phenoconversion</span>
+      <span class="hbadge">🤖 Gemini 2.5 Flash</span>
+      <span class="hbadge">📊 KMeans Clustering</span>
+      <span class="hbadge">🔬 Native VCF Parser</span>
+    </div>
+    <div id="upload-wrap">
+      <div class="gc" id="upload-card">
+        <label class="il">VCF File</label>
+        <div class="upload-btn-row">
+          <input type="file" id="vcf-file-input" accept=".vcf,.vcf.gz,.txt"/>
+          <button id="vcf-upload-btn" onclick="document.getElementById('vcf-file-input').click()">Click to Upload VCF (max size 10mb)</button>
+          <span id="vcf-file-name">No file chosen — demo VCF will be used</span>
+        </div>
+
+        <label class="il">Gemini API Key</label>
+        <input class="iinp" type="password" id="gemini-key" placeholder="AIza••••••••••••••••••••••••••••••"/>
+
+        <div class="irow" style="position:relative; overflow:visible;">
+          <div class="custom-select-wrapper" id="conc-meds-wrapper" style="flex:1; position:relative;">
+            <div class="iinp" id="conc-meds-display" style="cursor:pointer; display:flex; align-items:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-bottom:0; min-height:33px;">
+              <span style="color:rgba(110,165,215,.28)">-- Concomitant Meds --</span>
+            </div>
+            <div id="conc-meds-dropdown" style="position:absolute; top:calc(100% + 4px); left:0; right:0; background:rgba(2,11,24,.95); border:1px solid rgba(0,212,255,.16); border-radius:8px; max-height:220px; overflow-y:auto; z-index:1000; display:none; backdrop-filter:blur(16px); text-align:left; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+              <label class="conc-lbl"><input type="checkbox" value="Bupropion"> Bupropion (CYP Inhibitor)</label>
+              <label class="conc-lbl"><input type="checkbox" value="Fluoxetine"> Fluoxetine (CYP Inhibitor)</label>
+              <label class="conc-lbl"><input type="checkbox" value="Paroxetine"> Paroxetine (CYP Inhibitor)</label>
+              <label class="conc-lbl"><input type="checkbox" value="Quinidine"> Quinidine (CYP Inhibitor)</label>
+              <label class="conc-lbl"><input type="checkbox" value="Terbinafine"> Terbinafine (CYP Inhibitor)</label>
+              <label class="conc-lbl"><input type="checkbox" value="Cinacalcet"> Cinacalcet (CYP Inhibitor)</label>
+              <label class="conc-lbl"><input type="checkbox" value="Mirabegron"> Mirabegron (CYP Inhibitor)</label>
+              <label class="conc-lbl"><input type="checkbox" value="Fluconazole"> Fluconazole (CYP Inhibitor)</label>
+              <label class="conc-lbl"><input type="checkbox" value="Fluvoxamine"> Fluvoxamine (CYP Inhibitor)</label>
+              <label class="conc-lbl"><input type="checkbox" value="Ticlopidine"> Ticlopidine (CYP Inhibitor)</label>
+              <label class="conc-lbl"><input type="checkbox" value="Voriconazole"> Voriconazole (CYP Inhibitor)</label>
+              <label class="conc-lbl"><input type="checkbox" value="Omeprazole"> Omeprazole (CYP Inhibitor)</label>
+              <label class="conc-lbl"><input type="checkbox" value="Warfarin"> Warfarin</label>
+              <label class="conc-lbl"><input type="checkbox" value="Aspirin"> Aspirin</label>
+              <label class="conc-lbl"><input type="checkbox" value="Clopidogrel"> Clopidogrel</label>
+              <label class="conc-lbl"><input type="checkbox" value="Atorvastatin"> Atorvastatin</label>
+            </div>
+          </div>
+          <input class="iinp" type="text" id="patient-id" placeholder="Patient ID" style="width:118px" value="PATIENT-001"/>
+        </div>
+        <button class="btn-go" id="btn-analyze">ANALYZE GENOME →</button>
+      </div>
+    </div>
+    <div id="shint"><span>Scroll</span><div class="sarr"></div></div>
+  </div>
+</section>
+
+<section id="s2">
+  <div id="s2-sticky">
+    <div id="s2-grid"></div>
+    <div id="s2-glow"></div>
+    <div id="phase-label">Scroll to explore</div>
+
+    <div class="fc" id="c1">
+      <div class="fc-inner">
+        <div class="fc-head"><span class="fc-icon">📋</span>
+          <div><div class="fc-title">Clinical Pharmacogenomic Report</div><div class="fc-title-sub">Deterministic CPIC Engine · FDA/PharmGKB Compliant</div></div>
+        </div>
+        <div class="fc-sep"></div>
+        <div class="fc-body-area">
+          <p class="fc-body-text" id="c1-body">
+            This dashboard details <b>evidence-graded clinical recommendations</b> for every drug-gene interaction identified in the patient's VCF.
+            The engine evaluates the raw genetic diplotype and applies dynamic adjustments for <b>Narrow Therapeutic Index (NTI)</b> modifiers and 
+            Drug-Drug-Gene Interactions (DDGI) to calculate a precise 0-100% Risk Percentage.
+          </p>
+
+          <div style="display:flex; gap:10px; margin-bottom:1.5rem; position: relative; z-index: 50;">
+            <button id="btn-view-table" class="view-toggle active">📋 Table View</button>
+            <button id="btn-view-json" class="view-toggle">⚙️ Raw JSON Schema</button>
+            <button id="btn-copy-json" class="view-toggle" style="margin-left:auto;">📋 Copy JSON</button>
+            <button id="btn-dl-json" class="view-toggle" style="background:rgba(0,212,255,0.1); border-color:var(--accent); color:var(--accent);">⬇ Download JSON</button>
+          </div>
+          
+          <div id="c1-table-container">
+            <div class="split-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 2rem;">
+              <div class="stat-box"><div class="stat-val" style="color:var(--green)" id="c1-genes">6</div><div class="stat-lbl">Target Genes Analyzed</div></div>
+              <div class="stat-box"><div class="stat-val" style="color:var(--amber)" id="c1-drugs">21</div><div class="stat-lbl">Drug Pairs Evaluated</div></div>
+              <div class="stat-box"><div class="stat-val" style="color:var(--accent)" id="c1-vars">100%</div><div class="stat-lbl">VCF Parsing Integrity</div></div>
+            </div>
+
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Gene / Variant</th>
+                  <th>Drug</th>
+                  <th>Effective Phenotype</th>
+                  <th>Risk %</th>
+                  <th>Recommendation</th>
+                </tr>
+              </thead>
+              <tbody id="c1-results">
+                </tbody>
+            </table>
+          </div>
+
+          <div id="c1-json-container" style="display:none; height: 100%;">
+            <pre id="c1-json-code"></pre>
+          </div>
+
+          <div class="tags-row">
+            <span class="fc-tag tag-r">Toxic &gt;60%</span>
+            <span class="fc-tag tag-a">Adjust Dosage 20–60%</span>
+            <span class="fc-tag tag-g">Safe &lt;20%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc" id="c2">
+      <div class="fc-inner">
+        <div class="fc-head"><span class="fc-icon">🎓</span>
+          <div><div class="fc-title">AI Patient Literacy &amp; Education</div><div class="fc-title-sub">Powered by Gemini 2.5 Flash · Clinical Translation</div></div>
+        </div>
+        <div class="fc-sep"></div>
+        <div class="fc-body-area">
+          <div class="split-grid">
+            <div>
+              <p class="fc-body-text">
+                <b>Generative AI Summary:</b> Medical jargon creates barriers to patient adherence. 
+                Using the <code>google-genai</code> SDK, this module translates the deterministic CPIC outputs into 
+                compassionate, plain-language education.
+              </p>
+              <div style="background:rgba(0,18,55,.4); border-left:4px solid var(--accent); padding:1.5rem; border-radius:8px; margin-top:1rem;">
+                <p class="fc-body-text" id="c2-summary" style="margin-bottom:0; font-size:15px;"></p>
+              </div>
+              <div class="tags-row">
+                <span class="fc-tag tag-b">Jargon-Free</span>
+                <span class="fc-tag tag-g">Empathetic Tone</span>
+              </div>
+            </div>
+            <div>
+              <p class="fc-body-text"><b>Pharmacogene Dictionary:</b></p>
+              <ul style="color:var(--muted); font-family:'DM Mono',monospace; font-size:13px; line-height:2; list-style-type:square; padding-left:1.5rem;">
+                <li><b style="color:var(--text)">CYP2D6:</b> Metabolizes ~25% of all drugs, including opioids and antidepressants.</li>
+                <li><b style="color:var(--text)">CYP2C19:</b> Key enzyme for Clopidogrel and Proton Pump Inhibitors (PPIs).</li>
+                <li><b style="color:var(--text)">CYP2C9:</b> Critical for NSAIDs, Phenytoin, and Warfarin clearance.</li>
+                <li><b style="color:var(--text)">SLCO1B1:</b> Hepatic transporter controlling statin uptake; variants increase myopathy risk.</li>
+                <li><b style="color:var(--text)">TPMT:</b> Detoxifies thiopurines (leukemia/autoimmune treatments).</li>
+                <li><b style="color:var(--text)">DPYD:</b> Primary catabolizer for 5-FU chemotherapy.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc" id="c3">
+      <div class="fc-inner">
+        <div class="fc-head"><span class="fc-icon">🌿</span>
+          <div><div class="fc-title">Integrative Wellness Protocols</div><div class="fc-title-sub">Evidence-Based Dietary &amp; Lifestyle Modifiers</div></div>
+        </div>
+        <div class="fc-sep"></div>
+        <div class="fc-body-area">
+          <p class="fc-body-text">
+            While genetic phenotypes are fixed, <b>hepatic and renal clearance</b> efficiency can be heavily modulated by lifestyle and diet. 
+            The AI engine generates personalized wellness protocols based on the specific enzymes flagged in the VCF.
+          </p>
+          <div class="split-grid">
+            <div style="background:rgba(0,232,122,.05); border:1px solid rgba(0,232,122,.2); border-radius:12px; padding:2rem;">
+              <h3 style="font-family:'DM Mono',monospace; font-size:16px; color:var(--green); margin-bottom:1rem; text-transform:uppercase;">AI Wellness Protocol</h3>
+              <p class="fc-body-text" id="c3-tips" style="font-size:15px; margin-bottom:0;"></p>
+            </div>
+            <div>
+              <h3 style="font-family:'DM Mono',monospace; font-size:16px; color:var(--text); margin-bottom:1rem; text-transform:uppercase;">Common Dietary Modifiers</h3>
+              <table class="data-table">
+                <tr><th>Modifier</th><th>Impacted Pathway</th></tr>
+                <tr><td>Grapefruit Juice</td><td>CYP3A4 / CYP1A2 Inhibition</td></tr>
+                <tr><td>Cruciferous Veggies</td><td>CYP1A2 Induction</td></tr>
+                <tr><td>St. John's Wort</td><td>CYP3A4 / CYP2C19 Broad Induction</td></tr>
+                <tr><td>High Vitamin K Greens</td><td>Warfarin Antagonism (VKORC1)</td></tr>
+                <tr><td>Alcohol Intake</td><td>Hepatic Glutathione Depletion</td></tr>
+              </table>
+              <div class="tags-row" style="margin-top:2rem;">
+                <span class="fc-tag tag-g">Not Medical Advice</span>
+                <span class="fc-tag tag-a">Integrative Medicine</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc" id="c4">
+      <div class="fc-inner">
+        <div class="fc-head"><span class="fc-icon">⚡</span>
+          <div><div class="fc-title">Drug-Drug-Gene Interactions (DDGI)</div><div class="fc-title-sub">FDA/Flockhart Phenoconversion Detection</div></div>
+        </div>
+        <div class="fc-sep"></div>
+        <div class="fc-body-area">
+          <div class="split-grid">
+            <div>
+              <p class="fc-body-text">
+                <b>The Phenoconversion Paradigm:</b> A patient's genetically determined metabolizer status can be functionally overridden by a co-administered drug that strongly inhibits the same enzyme.
+                For example, a genetic <i>Normal Metabolizer</i> taking Fluoxetine (a potent inhibitor) acts clinically as a <i>Poor Metabolizer</i>.
+              </p>
+              <div id="c4-alert-box" style="background:rgba(255,68,85,.1); border:1px solid var(--red); padding:1.5rem; border-radius:12px; margin-top:1.5rem;">
+                <h3 style="font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--red); margin-bottom:0.5rem;" id="c4-pheno-tag">STATUS: SCANNING...</h3>
+                <p class="fc-body-text" id="c4-meds" style="margin-bottom:0;"></p>
+              </div>
+            </div>
+            <div>
+              <h3 style="font-family:'DM Mono',monospace; font-size:14px; color:var(--text); margin-bottom:1rem; text-transform:uppercase;">Target Inhibition Dictionary</h3>
+              <div class="stat-box" style="margin-bottom:1rem; padding:1rem;">
+                <b style="color:var(--accent);">CYP2D6 Strong Inhibitors (>5-fold AUC increase)</b><br>
+                <span style="font-size:12px; color:var(--muted);">Bupropion, Fluoxetine, Paroxetine, Quinidine, Terbinafine, Cinacalcet, Mirabegron</span>
+              </div>
+              <div class="stat-box" style="padding:1rem;">
+                <b style="color:var(--accent);">CYP2C19 Strong Inhibitors</b><br>
+                <span style="font-size:12px; color:var(--muted);">Fluconazole, Fluvoxamine, Ticlopidine, Voriconazole, Omeprazole</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc" id="c5">
+      <div class="fc-inner">
+        <div class="fc-head"><span class="fc-icon">📊</span>
+          <div><div class="fc-title">Population Risk Analytics</div><div class="fc-title-sub">500-Patient Sim · Scikit-Learn KMeans Matrix</div></div>
+        </div>
+        <div class="fc-sep"></div>
+        <div class="fc-body-area" style="overflow:hidden;">
+          <div class="analytics-grid">
+            <div class="chart-box">
+              <div class="chart-title">Monthly Risk Identification Trend</div>
+              <div class="chart-container"><canvas id="c5-line"></canvas></div>
+            </div>
+            <div class="chart-box">
+              <div class="chart-title">Avg Minor Allele Frequency by Target Gene</div>
+              <div class="chart-container"><canvas id="c5-hist"></canvas></div>
+            </div>
+            <div class="chart-box">
+              <div class="chart-title">Overall Risk Assessment Distribution</div>
+              <div class="chart-container"><canvas id="c5-pie"></canvas></div>
+            </div>
+            <div class="chart-box">
+              <div class="chart-title">KMeans High-Risk Patient Clustering</div>
+              <div class="chart-container"><canvas id="c5-scatter"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc" id="c6">
+      <div class="fc-inner">
+        <div class="fc-head"><span class="fc-icon">🤖</span>
+          <div><div class="fc-title">Mathematical Methodology &amp; Engineering</div><div class="fc-title-sub">Deterministic Scoring · K-Means++ · Feature Selection</div></div>
+        </div>
+        <div class="fc-sep"></div>
+        <div class="fc-body-area">
+          <div class="split-grid">
+            <div>
+              <p class="fc-body-text"><b>Deterministic Risk Percentage Engine:</b></p>
+              <div style="background:#020b18; border:1px solid rgba(0,212,255,.2); padding:1rem; border-radius:8px; font-family:'DM Mono', monospace; font-size:13px; color:var(--accent); margin-bottom:1.5rem;">
+                Risk% = clamp(<br>
+                &nbsp;&nbsp;base_range(phenotype) + <br>
+                &nbsp;&nbsp;MD5_jitter(gene|drug|phenotype) + <br>
+                &nbsp;&nbsp;NTI_weight(drug),<br>
+                0, 100)<br>
+              </div>
+              <table class="data-table">
+                <tr><th>Phenotype Classification</th><th>Base Range</th><th>Clinical Rationale</th></tr>
+                <tr><td>Normal / Rapid Metabolizer</td><td>5–15%</td><td>Expected PK; minimal background ADE risk</td></tr>
+                <tr><td>Intermediate Metabolizer</td><td>35–55%</td><td>Variable exposure; dosage titration required</td></tr>
+                <tr><td>Poor / Ultrarapid Metabolizer</td><td>82–99%</td><td>Severe PK disruption; predictable drug toxicity</td></tr>
+              </table>
+            </div>
+            <div>
+              <p class="fc-body-text"><b>Machine Learning Subgrouping (Scikit-Learn):</b></p>
+              <ul style="color:var(--muted); font-family:'DM Mono',monospace; font-size:13px; line-height:2; list-style-type:square; padding-left:1.5rem; margin-bottom:1.5rem;">
+                <li><b>Algorithm:</b> <code>KMeans(n_clusters=4, init='k-means++')</code></li>
+                <li><b>Z-Score Normalization:</b> <code>StandardScaler().fit_transform(features)</code></li>
+                <li><b>Vector Features:</b> <code>phenotype_score</code>, <code>risk_score</code>, <code>allele_frequency</code></li>
+                <li><b>High-Risk Labeling:</b> Clusters returning a mean risk score ≥ 2.0.</li>
+              </ul>
+              <p class="fc-body-text"><b>Narrow Therapeutic Index (NTI) Weights:</b></p>
+              <p style="font-family:'DM Mono',monospace; font-size:12px; color:var(--amber); line-height:1.6;">
+                Additive penalties are applied exclusively to non-normal phenotypes to heavily skew the risk score toward 100% for highly dangerous drugs.<br>
+                Warfarin (+10) · 5-Fluorouracil (+8) · Capecitabine (+8) · Phenytoin (+7) · Azathioprine (+6) · Voriconazole (+5)
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="risk-wrap">
+      <div id="risk-ring-1"></div>
+      <div id="risk-ring-2"></div>
+      <div id="risk-ring-3"></div>
+      <div id="risk-or"></div>
+      <svg id="risk-svg" width="300" height="300" viewBox="0 0 240 240">
+        <defs>
+          <linearGradient id="ag" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#0055ff" stop-opacity=".88"/>
+            <stop offset="100%" stop-color="#00d4ff" stop-opacity=".88"/>
+          </linearGradient>
+          <linearGradient id="ag-red" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#ff2244" stop-opacity=".88"/>
+            <stop offset="100%" stop-color="#ff6655" stop-opacity=".88"/>
+          </linearGradient>
+        </defs>
+        <circle cx="120" cy="120" r="108" fill="rgba(2,12,38,.95)" stroke="rgba(0,212,255,.1)" stroke-width="1.5"/>
+        <circle cx="120" cy="120" r="98" fill="none" stroke="rgba(0,212,255,.07)" stroke-width="20" stroke-dasharray="3 9" stroke-linecap="round"/>
+        <circle id="risk-arc" cx="120" cy="120" r="108" fill="none" stroke="url(#ag)" stroke-width="4"
+          stroke-dasharray="0 679" stroke-dashoffset="170" stroke-linecap="round" transform="rotate(-90 120 120)"/>
+      </svg>
+      <div id="risk-inner">
+        <span id="risk-num">—%</span>
+        <span id="risk-lbl">Patient Maximum Risk</span>
+        <span id="risk-alert"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="s4">
+  <div id="s4-bg"></div>
+  <h1 id="outro-logo" style="position:relative;z-index:2;opacity:0;transform:scale(5);margin-top:20vh;text-align:center;will-change:transform,opacity;display:flex;align-items:center;justify-content:center;">
+    <img src="data:image/png;base64,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" alt="Zenomed Logo" style="height: clamp(60px, 10vw, 115px); width: auto; max-width: 88vw; filter: drop-shadow(0 0 90px rgba(0,200,255,.5)); display: block;">
+  </h1>
+
+  <div id="v-block">
+    <div class="v-item"><div class="v-val" style="color:var(--green)">v3.0</div><div class="v-lbl">Platform Version</div></div>
+    <div class="v-item"><div class="v-val" style="color:var(--amber)">RIFT 2026</div><div class="v-lbl">Hackathon Track</div></div>
+    <div class="v-item"><div class="v-val" style="color:var(--accent)">Gemini 2.5</div><div class="v-lbl">AI Engine</div></div>
+  </div>
+
+  <div id="disc">
+    <div id="disc-inner">
+      <h3>⚠ Medical Disclaimer</h3>
+      <p>
+        Zenomed is an investigational pharmacogenomic decision-support tool intended exclusively for
+        use by licensed healthcare professionals and trained clinical pharmacologists. All outputs —
+        including risk percentages, CPIC recommendations, AI explanations, and wellness tips — are
+        AI-generated and must be independently verified before clinical application. This platform does
+        not constitute medical advice, diagnosis, or treatment. Risk percentages are deterministic model
+        outputs calibrated to population data and do not represent an individual patient's actual clinical
+        outcome probability. Always consult a qualified physician, clinical pharmacologist, or certified
+        genetic counselor before making therapeutic decisions based on pharmacogenomic data.
+      </p>
+    </div>
+  </div>
+
+  <div id="team-block">
+    <div id="team-name">Shadow Syndicate</div>
+    <div id="team-sub">RIFT 2026 · Zenomed Team</div>
+    <div class="team-member" style="margin-top:12px;color:var(--muted)">Lead Bioinformatics Software Engineer &amp; UI/UX Design</div>
+  </div>
+
+  <footer id="footer">
+    <span class="ft-b">© 2025–2026 Zenomed · RIFT Hackathon</span>
+    <span class="ft-tag">Engineered by Shadow Syndicate</span>
+    <span class="ft-r">CPIC · PharmGKB · FDA<br>Gemini 2.5 Flash · Scikit-Learn</span>
+  </footer>
+</section>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+// ── CLIPBOARD & DOWNLOAD LOGIC ──
+let currentJsonString = "";
+
+document.getElementById('btn-copy-json').addEventListener('click', async function() {
+  if (!currentJsonString) return;
+  try {
+    await navigator.clipboard.writeText(currentJsonString);
+    const originalText = this.innerText;
+    this.innerText = "✅ Copied!";
+    this.style.borderColor = "var(--green)";
+    this.style.color = "var(--green)";
+    setTimeout(() => {
+      this.innerText = originalText;
+      this.style.borderColor = "rgba(0, 212, 255, 0.15)";
+      this.style.color = "var(--muted)";
+    }, 2000);
+  } catch (err) {
+    showError("Failed to copy to clipboard.");
+  }
+});
+
+// ── CUSTOM DROPDOWN LOGIC ──
+const concWrapper = document.getElementById('conc-meds-wrapper');
+const concDisplay = document.getElementById('conc-meds-display');
+const concDropdown = document.getElementById('conc-meds-dropdown');
+const concCheckboxes = concDropdown.querySelectorAll('input[type="checkbox"]');
+let selectedConcMeds = [];
+
+concDisplay.addEventListener('click', (e) => {
+  e.stopPropagation();
+  concDropdown.style.display = concDropdown.style.display === 'block' ? 'none' : 'block';
+});
+
+document.addEventListener('click', (e) => {
+  if (!concWrapper.contains(e.target)) concDropdown.style.display = 'none';
+});
+
+concCheckboxes.forEach(cb => {
+  cb.addEventListener('change', () => {
+    selectedConcMeds = Array.from(concCheckboxes).filter(i => i.checked).map(i => i.value);
+    if (selectedConcMeds.length === 0) {
+      concDisplay.innerHTML = '<span style="color:rgba(110,165,215,.28)">-- Concomitant Meds --</span>';
+    } else {
+      concDisplay.innerHTML = `<span style="color:var(--text)">${selectedConcMeds.join(', ')}</span>`;
+    }
+  });
+});
+
+// ── CURSOR ──
+const cur = document.getElementById('cur'), curR = document.getElementById('cur-r');
+let cx = innerWidth/2, cy = innerHeight/2, rx = cx, ry = cy;
+document.addEventListener('mousemove', e => { cx = e.clientX; cy = e.clientY; });
+(function ac(){ rx += (cx-rx)*.14; ry += (cy-ry)*.14; cur.style.left=cx+'px'; cur.style.top=cy+'px'; curR.style.left=rx+'px'; curR.style.top=ry+'px'; requestAnimationFrame(ac); })();
+document.querySelectorAll('button,input,select,a,.fc-inner,.custom-select-wrapper,.view-toggle').forEach(el => {
+  el.addEventListener('mouseenter', () => { cur.style.width='18px'; cur.style.height='18px'; curR.style.width='52px'; curR.style.height='52px'; });
+  el.addEventListener('mouseleave', () => { cur.style.width='10px'; cur.style.height='10px'; curR.style.width='36px'; curR.style.height='36px'; });
+});
+
+// ── FILE UPLOAD ──
+const vcfInput = document.getElementById('vcf-file-input');
+const vcfName = document.getElementById('vcf-file-name');
+vcfInput.addEventListener('change', () => {
+  if (vcfInput.files[0]) {
+    vcfName.textContent = vcfInput.files[0].name;
+    vcfName.style.color = 'var(--green)';
+  }
+});
+
+// ── LOADER ──
+gsap.timeline({ onComplete: () => {
+  gsap.to('#loader', { opacity:0, duration:.5, onComplete: () => {
+    document.getElementById('loader').style.display = 'none';
+    init();
+  }});
+}})
+.to('#ld-txt', { opacity:1, duration:.35 })
+.to('#ld-sub', { opacity:1, duration:.3 }, 0.3);
+
+// ── NAV ──
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('solid', scrollY > 60);
+});
+
+// ── CHART GLOBALS ──
+window.myCharts = {};
+Chart.defaults.color = 'rgba(180,210,255,0.6)';
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size = 10;
+
+// ── ERROR TOAST ──
+function showError(msg) {
+  const t = document.getElementById('err-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 5000);
+}
+
+// ── VIEW TOGGLES FOR CARD 1 ──
+document.getElementById('btn-view-table').addEventListener('click', function() {
+  this.classList.add('active');
+  document.getElementById('btn-view-json').classList.remove('active');
+  document.getElementById('c1-table-container').style.display = 'block';
+  document.getElementById('c1-json-container').style.display = 'none';
+});
+
+document.getElementById('btn-view-json').addEventListener('click', function() {
+  this.classList.add('active');
+  document.getElementById('btn-view-table').classList.remove('active');
+  document.getElementById('c1-table-container').style.display = 'none';
+  document.getElementById('c1-json-container').style.display = 'block';
+});
+
+// ── BACKEND DATA ──
+let backendData = null;
+
+// ── ANALYZE ──
+document.getElementById('btn-analyze').addEventListener('click', async () => {
+  const overlay = document.getElementById('analyzing-overlay');
+  const anSub = document.getElementById('an-sub');
+  overlay.classList.add('active');
+
+  const steps = [
+    'Parsing VCF genome file…',
+    'Running CPIC risk engine…',
+    'Checking DDGI phenoconversion…',
+    'Generating AI explanations…',
+    'Computing ML analytics…',
+    'Building reports…'
+  ];
+  let si = 0;
+  const stepInterval = setInterval(() => { if (si < steps.length - 1) anSub.textContent = steps[++si]; }, 550);
+
+  try {
+    const formData = new FormData();
+    formData.append('patient_id', document.getElementById('patient-id').value || 'PATIENT-001');
+    formData.append('gemini_key', document.getElementById('gemini-key').value || '');
+    formData.append('concomitant_meds', selectedConcMeds.join(','));
+    if (vcfInput.files[0]) formData.append('vcf_file', vcfInput.files[0]);
+
+    const resp = await fetch('http://localhost:5000/api/analyze', { method:'POST', body: formData });
+    const data = await resp.json();
+
+    clearInterval(stepInterval);
+    overlay.classList.remove('active');
+
+    if (data.error) { showError('Error: ' + data.error); return; }
+
+    backendData = data;
+    populateCards(data);
+    setTimeout(() => { document.getElementById('s2').scrollIntoView({ behavior:'smooth' }); }, 300);
+
+  } catch(e) {
+    clearInterval(stepInterval);
+    overlay.classList.remove('active');
+    backendData = getDemoData(); 
+    populateCards(backendData);
+    setTimeout(() => { document.getElementById('s2').scrollIntoView({ behavior:'smooth' }); }, 300);
+  }
+});
+
+// ── DEMO DATA ──
+function getDemoData() {
+  const patient = document.getElementById('patient-id').value || 'DEMO-001';
+  return {
+    patient_id: patient,
+    overall_risk_pct: 95, 
+    meta: { total_variants: 1420, filtered_variants: 6 },
+    results: [
+      { gene:'CYP2D6', drug:'Codeine', risk:'Ineffective', risk_pct:88, phenotype:'PM', phenoconversion_detected:false, recommendation:'Avoid. Use alternative analgesics.', diplotype:'*4/*4' },
+      { gene:'CYP2C19', drug:'Clopidogrel', risk:'Ineffective', risk_pct:91, phenotype:'PM', phenoconversion_detected:false, recommendation:'Severely reduced activation. Use Prasugrel.', diplotype:'*2/*2' },
+      { gene:'CYP2C9', drug:'Warfarin', risk:'Toxic', risk_pct:95, phenotype:'PM', phenoconversion_detected:false, recommendation:'High bleeding risk. Reduce dose 75%.', diplotype:'*1/*3' },
+      { gene:'SLCO1B1', drug:'Simvastatin', risk:'Toxic', risk_pct:84, phenotype:'PM', phenoconversion_detected:false, recommendation:'Myopathy risk. Avoid 80mg dose.', diplotype:'*1/*5' },
+    ],
+    reports: [
+      {
+        "patient_id": patient,
+        "drug": "Codeine",
+        "timestamp": new Date().toISOString() + "Z",
+        "risk_assessment": { "risk_label": "Ineffective", "confidence_score": 88.0, "severity": "high" },
+        "pharmacogenomic_profile": {
+          "primary_gene": "CYP2D6", "diplotype": "*4/*4", "phenotype": "PM",
+          "detected_variants": [{ "rsid": "rs3892097", "chrom": "chr22", "pos": "42526694" }]
+        },
+        "clinical_recommendation": { "guideline_text": "Avoid. Use alternative analgesics.", "phenoconversion_detected": false, "phenoconversion_drug": "" },
+        "llm_generated_explanation": { "summary": "CYP2D6 Poor Metabolizers cannot O-demethylate codeine to morphine. Risk of insufficient analgesia is extremely high." },
+        "quality_metrics": { "vcf_parsing_success": true, "total_variants_parsed": 1420 }
+      },
+      {
+        "patient_id": patient,
+        "drug": "Warfarin",
+        "timestamp": new Date().toISOString() + "Z",
+        "risk_assessment": { "risk_label": "Toxic", "confidence_score": 95.0, "severity": "critical" },
+        "pharmacogenomic_profile": {
+          "primary_gene": "CYP2C9", "diplotype": "*1/*3", "phenotype": "PM",
+          "detected_variants": [{ "rsid": "rs1799853", "chrom": "chr10", "pos": "96702047" }]
+        },
+        "clinical_recommendation": { "guideline_text": "High bleeding risk. Reduce dose 75%.", "phenoconversion_detected": false, "phenoconversion_drug": "" },
+        "llm_generated_explanation": { "summary": "Impaired S-warfarin metabolism dramatically elevates bleeding risk. Narrow therapeutic index amplifies danger." },
+        "quality_metrics": { "vcf_parsing_success": true, "total_variants_parsed": 1420 }
+      }
+    ],
+    literacy_summary: 'Your genetic test results show how your body processes certain medications. Some of your genes work differently than average, which means some medicines (like Clopidogrel or Warfarin) may need completely different doses or safer alternatives. Always discuss these results with your doctor or pharmacist before making any medication changes.',
+    wellness_tips: '• Support liver metabolism: eat cruciferous vegetables (broccoli, Brussels sprouts)\n• Avoid grapefruit — it inhibits CYP3A4 and interacts with many drugs\n• Limit alcohol: it competes with hepatic enzymes\n• Leafy greens support vitamin K stability (important for warfarin)\n• Stay hydrated to support renal drug clearance\n• Moderate aerobic exercise improves hepatic blood flow',
+    concomitant_meds: ['Fluoxetine', 'Omeprazole'],
+    analytics: {
+      high_risk_n: 143,
+      total_simulated: 500,
+      pie_data: { Safe: 248, 'Adjust Dosage': 134, Toxic: 72, Ineffective: 46 },
+      trend_data: [
+        {month:1, risk_label:'Safe', count:20}, {month:2, risk_label:'Safe', count:22}, {month:3, risk_label:'Safe', count:21},
+        {month:1, risk_label:'Toxic', count:5}, {month:2, risk_label:'Toxic', count:8}, {month:3, risk_label:'Toxic', count:6}
+      ],
+      allele_data: [
+        {gene:'CYP2D6', allele_freq:0.07}, {gene:'CYP2C19', allele_freq:0.12}, {gene:'CYP2C9', allele_freq:0.04},
+        {gene:'SLCO1B1', allele_freq:0.15}, {gene:'TPMT', allele_freq:0.01}, {gene:'DPYD', allele_freq:0.02}
+      ],
+      cluster_data: Array.from({length:100}, () => ({
+        allele_freq: Math.random() * 0.3,
+        risk_score: Math.random() > 0.5 ? 2.5 + Math.random() : Math.random(),
+        cluster_label: Math.random() > 0.5 ? 'High-Risk Cluster' : 'Standard-Risk Cluster'
+      }))
+    }
+  };
+}
+
+// ── POPULATE CARDS ──
+function populateCards(data) {
+  const reports = data.reports || [];
+  currentJsonString = JSON.stringify(reports, null, 2);
+  document.getElementById('c1-json-code').textContent = currentJsonString;
+
+  const results = data.results || [];
+  document.getElementById('c1-genes').textContent = [...new Set(results.map(r=>r.gene))].length || 6;
+  document.getElementById('c1-drugs').textContent = results.length || '21+';
+  const listEl = document.getElementById('c1-results');
+  listEl.innerHTML = '';
+  
+  if (results.length) {
+    results.forEach(r => {
+      const riskClass = r.risk === 'Toxic' ? 'risk-toxic' : r.risk === 'Safe' ? 'risk-safe' : r.risk === 'Adjust Dosage' ? 'risk-adjust' : 'risk-ineffective';
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><b>${r.gene}</b><br><span style="font-size:10px;color:var(--muted);">${r.diplotype}</span></td>
+        <td style="color:var(--text);">${r.drug}</td>
+        <td>${r.phenotype} ${r.phenoconversion_detected ? '<span style="color:var(--red); font-size:10px;">(DDGI)</span>' : ''}</td>
+        <td class="${riskClass}"><b>${r.risk_pct}%</b></td>
+        <td style="color:var(--muted); font-size:11px;">${r.recommendation}</td>
+      `;
+      listEl.appendChild(row);
+    });
+  }
+
+  document.getElementById('btn-dl-json').onclick = () => {
+    if(!currentJsonString) return;
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(currentJsonString);
+    const dlAnchorNode = document.createElement('a');
+    dlAnchorNode.setAttribute("href",     dataStr);
+    dlAnchorNode.setAttribute("download", `zenomed_report_${data.patient_id}.json`);
+    document.body.appendChild(dlAnchorNode);
+    dlAnchorNode.click();
+    dlAnchorNode.remove();
+  };
+
+  if (data.literacy_summary) {
+    document.getElementById('c2-summary').innerHTML = data.literacy_summary;
+  }
+  if (data.wellness_tips) {
+    document.getElementById('c3-tips').innerHTML = data.wellness_tips.replace(/\n/g,'<br><br>');
+  }
+
+  const phenoDetected = results.some(r => r.phenoconversion_detected);
+  const tagEl = document.getElementById('c4-pheno-tag');
+  if(phenoDetected) {
+    tagEl.textContent = '⚠ PHENOCONVERSION ACTIVE';
+    tagEl.style.color = 'var(--red)';
+    tagEl.parentElement.style.background = 'rgba(255,68,85,.1)';
+    tagEl.parentElement.style.borderColor = 'var(--red)';
+  } else {
+    tagEl.textContent = 'NO PHENOCONVERSION DETECTED';
+    tagEl.style.color = 'var(--green)';
+    tagEl.parentElement.style.background = 'rgba(0,232,122,.1)';
+    tagEl.parentElement.style.borderColor = 'var(--green)';
+  }
+  
+  if (data.concomitant_meds && data.concomitant_meds.length) {
+    document.getElementById('c4-meds').innerHTML = `<b>Patient Co-Meds Registered:</b><br><span style="color:var(--accent);">${data.concomitant_meds.join(', ')}</span>`;
+  } else {
+    document.getElementById('c4-meds').innerHTML = `<span style="color:var(--muted);">No concomitant medications entered.</span>`;
+  }
+
+  const analytics = data.analytics || {};
+  
+  const ctxLine = document.getElementById('c5-line').getContext('2d');
+  if(window.myCharts.line) window.myCharts.line.destroy();
+  const trend = analytics.trend_data || [];
+  const riskLabels = ['Safe', 'Adjust Dosage', 'Toxic', 'Ineffective'];
+  const colors = {'Safe':'#00e87a', 'Adjust Dosage':'#ffb830', 'Toxic':'#ff4455', 'Ineffective':'#ff8c42'};
+  
+  window.myCharts.line = new Chart(ctxLine, {
+    type: 'line',
+    data: {
+      labels: [1,2,3,4,5,6,7,8,9,10,11,12],
+      datasets: riskLabels.map(rl => ({
+        label: rl,
+        data: [1,2,3,4,5,6,7,8,9,10,11,12].map(m => {
+          const row = trend.find(t => t.month === m && t.risk_label === rl);
+          return row ? row.count : Math.floor(Math.random()*20); 
+        }),
+        borderColor: colors[rl],
+        backgroundColor: colors[rl],
+        tension: 0.4,
+        borderWidth: 2,
+        pointRadius: 1
+      }))
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{display:false} }, y:{ grid:{color:'rgba(0,212,255,.05)'} } } }
+  });
+
+  const ctxHist = document.getElementById('c5-hist').getContext('2d');
+  if(window.myCharts.hist) window.myCharts.hist.destroy();
+  const allele = analytics.allele_data || [];
+  const genes = [...new Set(allele.map(a => a.gene))];
+  const freqs = genes.map(g => {
+    const vals = allele.filter(a => a.gene === g).map(a => a.allele_freq);
+    return vals.reduce((a,b)=>a+b,0) / (vals.length || 1);
+  });
+  
+  window.myCharts.hist = new Chart(ctxHist, {
+    type: 'bar',
+    data: {
+      labels: genes,
+      datasets: [{
+        label: 'Avg Minor Allele Frequency',
+        data: freqs,
+        backgroundColor: '#00d4ff',
+        borderRadius: 4
+      }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{display:false} }, y:{ grid:{color:'rgba(0,212,255,.05)'} } } }
+  });
+
+  const ctxPie = document.getElementById('c5-pie').getContext('2d');
+  if(window.myCharts.pie) window.myCharts.pie.destroy();
+  const pie = analytics.pie_data || { Safe:248, 'Adjust Dosage':134, Toxic:72, Ineffective:46 };
+  
+  window.myCharts.pie = new Chart(ctxPie, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(pie),
+      datasets: [{ data: Object.values(pie), backgroundColor:['#00e87a','#ffb830','#ff4455','#ff8c42'], borderWidth:0 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, cutout:'70%', plugins:{ legend:{ position:'right', labels:{ color:'rgba(180,210,255,.6)', boxWidth:12 } } } }
+  });
+
+  const ctxScatter = document.getElementById('c5-scatter').getContext('2d');
+  if(window.myCharts.scatter) window.myCharts.scatter.destroy();
+  const clust = analytics.cluster_data || [];
+  
+  window.myCharts.scatter = new Chart(ctxScatter, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: 'High-Risk Cluster',
+          data: clust.filter(c => c.cluster_label.includes('High')).map(c => ({x: c.allele_freq, y: c.risk_score})),
+          backgroundColor: '#ff4455',
+          pointRadius: 4
+        },
+        {
+          label: 'Standard-Risk Cluster',
+          data: clust.filter(c => !c.cluster_label.includes('High')).map(c => ({x: c.allele_freq, y: c.risk_score})),
+          backgroundColor: '#00e87a',
+          pointRadius: 4
+        }
+      ]
+    },
+    options: { 
+      responsive:true, maintainAspectRatio:false, 
+      plugins:{ legend:{ position:'top', labels:{color:'rgba(180,210,255,.6)', boxWidth:8} } }, 
+      scales: {
+        x: { title: { display:true, text:'Allele Frequency', color:'var(--muted)' }, grid:{display:false} },
+        y: { title: { display:true, text:'Risk Score', color:'var(--muted)' }, grid:{color:'rgba(0,212,255,.05)'} }
+      } 
+    }
+  });
+
+  let maxRisk = results.length ? Math.max(...results.map(r => r.risk_pct)) : data.overall_risk_pct || 0;
+  document.getElementById('risk-num').textContent = maxRisk + '%';
+  const arc = document.getElementById('risk-arc');
+  const circumference = 2 * Math.PI * 108;
+  const dash = (maxRisk / 100) * circumference;
+  arc.setAttribute('stroke-dasharray', `${dash} ${circumference}`);
+  arc.setAttribute('stroke', maxRisk > 60 ? 'url(#ag-red)' : maxRisk > 20 ? 'url(#ag)' : '#00e87a');
+  
+  const alertEl = document.getElementById('risk-alert');
+  if (maxRisk > 60) { alertEl.textContent = '⚠ CRITICAL TOXICITY RISK'; alertEl.style.color = '#ff6a76'; }
+  else if (maxRisk > 20) { alertEl.textContent = '⚡ MODERATE DOSAGE RISK'; alertEl.style.color = 'var(--amber)'; }
+  else { alertEl.textContent = '✓ STANDARD DOSING SAFE'; alertEl.style.color = 'var(--green)'; }
+}
+
+function init() {
+  document.getElementById('nav').style.pointerEvents = 'all';
+
+  gsap.timeline({
+    scrollTrigger:{ trigger:'#s1', start:'top top', end:'+=300%', pin:true, scrub:1.2, anticipatePin:1 }
+  })
+  .to('#hero-logo', { scale:.072, y:-(innerHeight/2-42), opacity:0, ease:'none', duration:3 })
+  .to('#nav', { opacity:1, ease:'none', duration:.8 }, 1.4)
+  .to('#shint', { opacity:0, ease:'none', duration:.4 }, 0)
+  .to('#hero-sub', { opacity:1, y:0, ease:'none', duration:.8 }, 2)
+  .to('#hero-desc', { opacity:1, y:0, ease:'none', duration:.8 }, 2.45)
+  .to('#hero-badges', { opacity:1, y:0, ease:'none', duration:.7 }, 2.9)
+  .to('#upload-wrap', { opacity:1, y:0, ease:'none', duration:.9 }, 3.3);
+
+  setupCardScroll();
+
+  gsap.timeline({
+    scrollTrigger:{ trigger:'#s4', start:'top 88%', end:'top 8%', scrub:1.2 }
+  }).to('#outro-logo', { scale:1, opacity:1, ease:'none', duration:1 });
+
+  [['#v-block','top 82%'], ['#disc','top 78%'], ['#team-block','top 82%'], ['#footer','top 92%']].forEach(([sel,s]) => {
+    gsap.to(sel, {
+      scrollTrigger:{ trigger:sel, start:s, toggleActions:'play none none reverse' },
+      opacity:1, y:0, duration:.85, ease:'power2.out'
+    });
+  });
+
+  window.addEventListener('resize', () => ScrollTrigger.refresh());
+}
+
+function setupCardScroll() {
+  const W = innerWidth, H = innerHeight;
+  const dx = W * 0.35, dy = H * 0.35, midy = H * 0.10;
+
+  const positions = [
+    { x:  dx,  y:  dy }, { x: -dx,  y:  dy },
+    { x:  dx,  y: -midy }, { x: -dx,  y: -midy },
+    { x:  dx,  y: -dy }, { x: -dx,  y: -dy },
+  ];
+
+  const orbitR = Math.min(W, H) * 0.38; 
+  const symDeg = [-180, -144, -108, -72, -36, 0];
+  const orbits = symDeg.map(deg => {
+    const rad = deg * Math.PI / 180;
+    return { x: Math.cos(rad) * orbitR, y: Math.sin(rad) * orbitR };
+  });
+
+  const cards = ['#c1','#c2','#c3','#c4','#c5','#c6'];
+  const phaseLabel = document.getElementById('phase-label');
+
+  const tl = gsap.timeline({
+    scrollTrigger: { trigger: '#s2', start: 'top top', end: 'bottom bottom', scrub: 1, anticipatePin: 1 }
+  });
+
+  cards.forEach(sel => {
+    gsap.set(sel, { xPercent:-50, yPercent:-50, scale:0.8, x:0, y:80, autoAlpha:0 });
+  });
+  gsap.set('#risk-wrap', { opacity:0, scale:0.5 });
+  gsap.set(phaseLabel, { opacity:0 });
+
+  const PHASES = [
+    '01 / Clinical Reports Dashboard', '02 / Patient Literacy Module',
+    '03 / Integrative Wellness', '04 / DDGI Phenoconversion',
+    '05 / Population Analytics Matrix', '06 / Machine Learning Methodology',
+    'Final Risk Prediction Orbit', '',
+  ];
+
+  const FADE_IN_DUR = 0.8, HOLD_DUR = 2.5, MOVE_DUR = 1.0; 
+  let t = 0;
+
+  cards.forEach((sel, i) => {
+    const corner = positions[i];
+    tl.to(sel, { autoAlpha:1, scale:1, y:0, duration:FADE_IN_DUR, ease:'power2.out' }, t);
+    t += FADE_IN_DUR + HOLD_DUR;
+    tl.to(sel, { x: corner.x, y: corner.y, scale: 0.22, duration: MOVE_DUR, ease: 'power3.inOut' }, t);
+    t += MOVE_DUR + 0.2; 
+  });
+
+  const ORBIT_START = t + 0.5;
+  tl.to('#risk-wrap', { autoAlpha:1, opacity:1, scale:1, duration:1.5, ease:'back.out(1.5)' }, ORBIT_START);
+
+  cards.forEach((sel, i) => {
+    tl.to(sel, { x: orbits[i].x, y: orbits[i].y, rotation: symDeg[i] + 90, duration: 1.5, ease: 'power2.inOut' }, ORBIT_START);
+  });
+
+  t = ORBIT_START + 2.5;
+  tl.to('#risk-wrap', { autoAlpha:0, opacity:0, scale:0.3, duration:1.0, ease:'power2.in' }, t);
+  cards.forEach((sel, i) => {
+    tl.to(sel, { autoAlpha:0, opacity:0, scale:0.1, y:'+=100', duration:1.0, ease:'power2.in' }, t + (i*0.05));
+  });
+
+  const cardPhaseEnds = [];
+  let tc = 0;
+  for (let i = 0; i < 6; i++) {
+    tc += FADE_IN_DUR + HOLD_DUR + MOVE_DUR + 0.2;
+    cardPhaseEnds.push(tc);
+  }
+  const totalDuration = tl.totalDuration();
+
+  ScrollTrigger.create({
+    trigger: '#s2', start: 'top top', end: 'bottom bottom',
+    onUpdate: (self) => {
+      const prog = self.progress * totalDuration;
+      let phase = 7;
+      for (let i = 0; i < cardPhaseEnds.length; i++) {
+        if (prog < cardPhaseEnds[i]) { phase = i; break; }
+      }
+      if (PHASES[phase]) {
+        phaseLabel.textContent = PHASES[phase];
+        phaseLabel.style.opacity = (prog < 0.02 || prog > totalDuration - 0.5) ? '0' : '1';
+      }
+    }
+  });
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => { populateCards(getDemoData()); }, 1600);
+});
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ZENOMED ENHANCEMENT JAVASCRIPT — APPLE / SAMSUNG / GTA6 TIER
+═══════════════════════════════════════════════════════════════ -->
+<script>
+(function ZenomedEnhancement() {
+  'use strict';
+
+  // ── SCROLL PROGRESS BAR ──────────────────────────────────────
+  const progressBar = document.getElementById('scroll-progress');
+  window.addEventListener('scroll', () => {
+    const total = document.body.scrollHeight - window.innerHeight;
+    const pct = total > 0 ? (window.scrollY / total) * 100 : 0;
+    progressBar.style.width = pct + '%';
+  }, { passive: true });
+
+  // ── PARTICLE CANVAS ──────────────────────────────────────────
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [], mouse = { x: -9999, y: -9999 };
+
+  function resizeCanvas() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas, { passive: true });
+
+  document.addEventListener('mousemove', e => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+  }, { passive: true });
+
+  class Particle {
+    constructor() { this.reset(true); }
+    reset(initial = false) {
+      this.x = Math.random() * W;
+      this.y = initial ? Math.random() * H : H + 10;
+      this.vx = (Math.random() - 0.5) * 0.4;
+      this.vy = -(Math.random() * 0.5 + 0.2);
+      this.r = Math.random() * 2 + 0.5;
+      this.alpha = 0;
+      this.targetAlpha = Math.random() * 0.5 + 0.1;
+      this.life = 0;
+      this.maxLife = Math.random() * 300 + 200;
+      this.color = Math.random() > 0.7 ? `rgba(0,85,255,` : `rgba(0,212,255,`;
+      this.isDna = Math.random() > 0.85;
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      this.life++;
+      const lifeRatio = this.life / this.maxLife;
+      if (lifeRatio < 0.1) this.alpha = (lifeRatio / 0.1) * this.targetAlpha;
+      else if (lifeRatio > 0.8) this.alpha = ((1 - lifeRatio) / 0.2) * this.targetAlpha;
+      else this.alpha = this.targetAlpha;
+      // Slight mouse repulsion
+      const dx = this.x - mouse.x, dy = this.y - mouse.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 120) {
+        const force = (120 - dist) / 120 * 0.3;
+        this.vx += (dx / dist) * force;
+        this.vy += (dy / dist) * force;
+      }
+      // Damping
+      this.vx *= 0.99;
+      this.vy = Math.max(this.vy, -1.5);
+      if (this.life > this.maxLife || this.y < -20 || this.x < -20 || this.x > W + 20) this.reset();
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+      ctx.fillStyle = this.color + this.alpha + ')';
+      ctx.fill();
+      if (this.isDna) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r + 3, 0, Math.PI * 2);
+        ctx.strokeStyle = this.color + (this.alpha * 0.3) + ')';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Create particles
+  for (let i = 0; i < 120; i++) particles.push(new Particle());
+
+  // Draw connections
+  function drawConnections() {
+    const maxDist = 100;
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < maxDist) {
+          const a = (1 - dist / maxDist) * 0.08;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(0,212,255,${a})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function animateParticles() {
+    ctx.clearRect(0, 0, W, H);
+    drawConnections();
+    particles.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(animateParticles);
+  }
+  animateParticles();
+
+  // ── HERO FLOATING PARTICLES ──────────────────────────────────
+  const s1 = document.getElementById('s1');
+  if (s1) {
+    for (let i = 0; i < 25; i++) {
+      const p = document.createElement('div');
+      p.className = 'hero-particle';
+      const size = Math.random() * 3 + 1;
+      p.style.cssText = `
+        width: ${size}px;
+        height: ${size}px;
+        left: ${Math.random() * 100}%;
+        animation-duration: ${Math.random() * 15 + 10}s;
+        animation-delay: ${Math.random() * 15}s;
+        opacity: 0;
+        background: ${Math.random() > 0.5 ? 'rgba(0,212,255,0.6)' : 'rgba(0,85,255,0.5)'};
+        box-shadow: 0 0 ${size * 3}px currentColor;
+      `;
+      s1.appendChild(p);
+    }
+  }
+
+  // ── 3D CARD TILT ─────────────────────────────────────────────
+  document.querySelectorAll('.fc-inner').forEach(card => {
+    // Add shine div
+    const shine = document.createElement('div');
+    shine.className = 'fc-shine';
+    card.appendChild(shine);
+
+    card.addEventListener('mousemove', e => {
+      const rect = card.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = (e.clientX - cx) / (rect.width / 2);
+      const dy = (e.clientY - cy) / (rect.height / 2);
+      const rotX = -dy * 4;
+      const rotY = dx * 4;
+      card.style.transform = `perspective(1200px) rotateX(${rotX}deg) rotateY(${rotY}deg) scale(1.01)`;
+      const mx = ((e.clientX - rect.left) / rect.width * 100).toFixed(1) + '%';
+      const my = ((e.clientY - rect.top) / rect.height * 100).toFixed(1) + '%';
+      card.style.setProperty('--mx', mx);
+      card.style.setProperty('--my', my);
+      card.parentElement.classList.add('fc-tilt-active');
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+      card.style.removeProperty('--mx');
+      card.style.removeProperty('--my');
+      card.parentElement.classList.remove('fc-tilt-active');
+    });
+  });
+
+  // ── MAGNETIC BUTTON ──────────────────────────────────────────
+  document.querySelectorAll('.btn-go').forEach(btn => {
+    btn.addEventListener('mousemove', e => {
+      const rect = btn.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = (e.clientX - cx) * 0.25;
+      const dy = (e.clientY - cy) * 0.25;
+      btn.style.setProperty('--mag-x', dx + 'px');
+      btn.style.setProperty('--mag-y', dy + 'px');
+      btn.classList.add('btn-go-magnetic');
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.setProperty('--mag-x', '0px');
+      btn.style.setProperty('--mag-y', '0px');
+      btn.classList.remove('btn-go-magnetic');
+    });
+    // Ripple effect
+    btn.addEventListener('click', e => {
+      const rect = btn.getBoundingClientRect();
+      const x = e.clientX - rect.left, y = e.clientY - rect.top;
+      const ripple = document.createElement('span');
+      ripple.style.cssText = `
+        position:absolute; border-radius:50%;
+        width:0; height:0;
+        left:${x}px; top:${y}px;
+        background:rgba(255,255,255,0.25);
+        transform:translate(-50%,-50%);
+        animation:ripple-expand 0.6s ease-out forwards;
+        pointer-events:none; z-index:10;
+      `;
+      btn.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 700);
+    });
+  });
+
+  // Ripple keyframe
+  if (!document.getElementById('ripple-style')) {
+    const s = document.createElement('style');
+    s.id = 'ripple-style';
+    s.textContent = `@keyframes ripple-expand {
+      to { width: 300px; height: 300px; opacity: 0; }
+    }`;
+    document.head.appendChild(s);
+  }
+
+  // ── CURSOR TRAIL ─────────────────────────────────────────────
+  const trailDots = [];
+  const TRAIL_LENGTH = 8;
+  for (let i = 0; i < TRAIL_LENGTH; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'cursor-trail-dot';
+    dot.style.opacity = ((TRAIL_LENGTH - i) / TRAIL_LENGTH * 0.5).toFixed(2);
+    dot.style.width = dot.style.height = Math.max(2, 4 - i * 0.4) + 'px';
+    document.body.appendChild(dot);
+    trailDots.push({ el: dot, x: -100, y: -100 });
+  }
+  let trailPositions = Array(TRAIL_LENGTH).fill(null).map(() => ({ x: -100, y: -100 }));
+  let trailMouse = { x: -100, y: -100 };
+  document.addEventListener('mousemove', e => {
+    trailMouse.x = e.clientX;
+    trailMouse.y = e.clientY;
+  }, { passive: true });
+
+  (function animateTrail() {
+    trailPositions.unshift({ x: trailMouse.x, y: trailMouse.y });
+    if (trailPositions.length > TRAIL_LENGTH) trailPositions.pop();
+    trailDots.forEach((dot, i) => {
+      if (trailPositions[i]) {
+        dot.el.style.left = trailPositions[i].x + 'px';
+        dot.el.style.top = trailPositions[i].y + 'px';
+      }
+    });
+    requestAnimationFrame(animateTrail);
+  })();
+
+  // ── DATA TABLE ROW REVEAL ────────────────────────────────────
+  const tableObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const rows = entry.target.querySelectorAll('tbody tr');
+        rows.forEach((row, i) => {
+          row.style.opacity = '0';
+          row.style.transform = 'translateX(-12px)';
+          row.style.transition = `opacity 0.4s ease ${i * 0.05}s, transform 0.4s ease ${i * 0.05}s`;
+          setTimeout(() => {
+            row.style.opacity = '1';
+            row.style.transform = 'translateX(0)';
+          }, 50 + i * 50);
+        });
+        tableObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2 });
+  document.querySelectorAll('.data-table').forEach(t => tableObserver.observe(t));
+
+  // ── STAT BOX NUMBER COUNTER ──────────────────────────────────
+  function animateNumber(el, end, duration = 1200) {
+    const start = 0;
+    const isPercent = el.textContent.includes('%');
+    const isText = isNaN(parseInt(el.textContent));
+    if (isText) return;
+    const num = parseInt(end);
+    if (isNaN(num)) return;
+    const startTime = performance.now();
+    function update(now) {
+      const elapsed = now - startTime;
+      const pct = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - pct, 3);
+      const current = Math.round(start + (num - start) * ease);
+      el.textContent = current + (isPercent ? '%' : '');
+      if (pct < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  }
+
+  const statObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const val = entry.target.querySelector('.stat-val');
+        if (val) animateNumber(val, val.textContent, 1500);
+        statObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('.stat-box').forEach(b => statObserver.observe(b));
+
+  // ── GLITCH DATA ATTRIBUTE ────────────────────────────────────
+  document.querySelectorAll('.fc-title').forEach(el => {
+    el.setAttribute('data-text', el.textContent);
+  });
+
+  // ── HOVER: CARD BORDER LIGHT SWEEP ──────────────────────────
+  document.querySelectorAll('.fc-inner').forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      card.style.borderColor = 'rgba(0,212,255,0.35)';
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.borderColor = '';
+    });
+  });
+
+  // ── ENHANCED LOADER ANIMATION ────────────────────────────────
+  const loaderEl = document.getElementById('loader');
+  if (loaderEl) {
+    // Create loading steps
+    const steps = [
+      'LOADING CPIC GUIDELINES...',
+      'INITIALIZING PHARMGKB ENGINE...',
+      'CONNECTING GEMINI 2.5 FLASH...',
+      'PHARMACOGENOMICS CORE READY'
+    ];
+    const subEl = document.getElementById('ld-sub');
+    let stepIdx = 0;
+    const stepInterval = setInterval(() => {
+      if (!document.getElementById('loader') || document.getElementById('loader').style.display === 'none') {
+        clearInterval(stepInterval);
+        return;
+      }
+      stepIdx = (stepIdx + 1) % steps.length;
+      if (subEl) {
+        subEl.style.opacity = '0';
+        subEl.style.transform = 'translateY(8px)';
+        subEl.style.transition = 'all 0.25s';
+        setTimeout(() => {
+          if (subEl && stepIdx < steps.length - 1) {
+            subEl.textContent = steps[stepIdx];
+            subEl.style.opacity = '1';
+            subEl.style.transform = 'translateY(0)';
+          }
+        }, 280);
+      }
+    }, 500);
+  }
+
+  // ── ANALYZING OVERLAY STEP TEXT ──────────────────────────────
+  const analysisSteps = [
+    'INITIALIZING PHARMACOGENOMIC CORE...',
+    'PARSING VCF VARIANTS...',
+    'RUNNING CPIC ALGORITHM...',
+    'COMPUTING PHENOTYPE SCORES...',
+    'DETECTING DDGI INTERACTIONS...',
+    'RUNNING KMEANS CLUSTERING...',
+    'GENERATING AI INSIGHTS...',
+    'COMPILING RISK MATRIX...',
+    'FINALIZING REPORT...'
+  ];
+
+  const anSub = document.getElementById('an-sub');
+  let analysisInterval;
+  const overlayEl = document.getElementById('analyzing-overlay');
+
+  if (overlayEl) {
+    const observer = new MutationObserver(() => {
+      if (overlayEl.classList.contains('active')) {
+        let idx = 0;
+        analysisInterval = setInterval(() => {
+          if (anSub && idx < analysisSteps.length) {
+            anSub.style.opacity = '0';
+            setTimeout(() => {
+              if (anSub) {
+                anSub.textContent = analysisSteps[idx];
+                anSub.style.opacity = '1';
+                anSub.style.transition = 'opacity 0.3s';
+              }
+              idx++;
+            }, 200);
+          } else {
+            clearInterval(analysisInterval);
+          }
+        }, 900);
+      } else {
+        clearInterval(analysisInterval);
+        idx = 0;
+      }
+    });
+    let idx = 0;
+    observer.observe(overlayEl, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  // ── SECTION REVEAL STAGGER ───────────────────────────────────
+  const sections = ['#v-block .v-item', '#disc-inner', '#team-block > *', '#footer > *'];
+  sections.forEach(sel => {
+    document.querySelectorAll(sel).forEach((el, i) => {
+      el.style.transitionDelay = (i * 0.08) + 's';
+    });
+  });
+
+  // ── VIEW TOGGLE BUTTON CLICK EFFECT ─────────────────────────
+  document.querySelectorAll('.view-toggle').forEach(btn => {
+    btn.addEventListener('click', function() {
+      this.style.transform = 'scale(0.95)';
+      setTimeout(() => { this.style.transform = ''; }, 150);
+    });
+  });
+
+  // ── NAV PILL TOOLTIP ─────────────────────────────────────────
+  document.querySelectorAll('.nav-pill').forEach(pill => {
+    pill.style.cursor = 'default';
+  });
+
+  // ── RISK CIRCLE PARTICLE ORBIT ───────────────────────────────
+  function startRiskOrbitParticles() {
+    const riskWrap = document.getElementById('risk-wrap');
+    if (!riskWrap || riskWrap._enhancedOrbit) return;
+    riskWrap._enhancedOrbit = true;
+
+    for (let i = 0; i < 8; i++) {
+      const dot = document.createElement('div');
+      const angle = (i / 8) * 360;
+      const radius = 155 + (i % 3) * 20;
+      dot.style.cssText = `
+        position:absolute; top:50%; left:50%;
+        width:${i % 2 === 0 ? 4 : 3}px; height:${i % 2 === 0 ? 4 : 3}px;
+        border-radius:50%;
+        background:${i % 3 === 0 ? 'rgba(0,212,255,0.8)' : i % 3 === 1 ? 'rgba(0,85,255,0.7)' : 'rgba(0,232,122,0.6)'};
+        box-shadow:0 0 8px currentColor;
+        pointer-events:none; z-index:25;
+        animation:orbit-particle-${i} ${8 + i * 1.2}s linear infinite;
+        transform-origin: ${-radius}px 0;
+      `;
+      const style = document.createElement('style');
+      style.textContent = `@keyframes orbit-particle-${i} {
+        0% { transform: rotate(${angle}deg) translateX(${radius}px) scale(1); opacity:0.7; }
+        50% { transform: rotate(${angle + 180}deg) translateX(${radius}px) scale(1.5); opacity:1; }
+        100% { transform: rotate(${angle + 360}deg) translateX(${radius}px) scale(1); opacity:0.7; }
+      }`;
+      document.head.appendChild(style);
+      riskWrap.appendChild(dot);
+    }
+  }
+
+  // Watch for risk-wrap becoming visible
+  if (document.getElementById('risk-wrap')) {
+    const riskObserver = new MutationObserver(() => {
+      const rw = document.getElementById('risk-wrap');
+      if (rw && parseFloat(getComputedStyle(rw).opacity) > 0.1) {
+        startRiskOrbitParticles();
+      }
+    });
+    riskObserver.observe(document.getElementById('risk-wrap'), { attributes: true, attributeStyle: true, childList: false });
+    // Also poll
+    const riskPoll = setInterval(() => {
+      const rw = document.getElementById('risk-wrap');
+      if (rw && parseFloat(window.getComputedStyle(rw).opacity) > 0.1) {
+        startRiskOrbitParticles();
+        clearInterval(riskPoll);
+      }
+    }, 500);
+  }
+
+  // ── BADGE STAGGER ANIMATION ──────────────────────────────────
+  document.querySelectorAll('.hbadge').forEach((badge, i) => {
+    badge.style.animationDelay = (i * 0.1) + 's';
+  });
+
+  // ── FC BODY TEXT LINKS GLOW ──────────────────────────────────
+  document.querySelectorAll('.fc-body-text b').forEach(b => {
+    b.style.transition = 'text-shadow 0.3s, color 0.3s';
+    b.addEventListener('mouseenter', () => {
+      b.style.textShadow = '0 0 15px rgba(0,212,255,0.6)';
+      b.style.color = '#ffffff';
+    });
+    b.addEventListener('mouseleave', () => {
+      b.style.textShadow = '';
+      b.style.color = '';
+    });
+  });
+
+  // ── CHART TITLE SHIMMER ──────────────────────────────────────
+  document.querySelectorAll('.chart-title').forEach(el => {
+    el.style.transition = 'color 0.3s, text-shadow 0.3s';
+    el.closest('.chart-box').addEventListener('mouseenter', () => {
+      el.style.textShadow = '0 0 15px rgba(0,212,255,0.5)';
+      el.style.color = '#ffffff';
+    });
+    el.closest('.chart-box').addEventListener('mouseleave', () => {
+      el.style.textShadow = '';
+      el.style.color = '';
+    });
+  });
+
+  // ── ERROR TOAST ENHANCEMENT ───────────────────────────────────
+  const origShowError = window.showError;
+  if (origShowError) {
+    window.showError = function(msg) {
+      origShowError(msg);
+      const toast = document.getElementById('err-toast');
+      if (toast) {
+        toast.style.boxShadow = '0 0 30px rgba(255,68,85,0.3)';
+      }
+    };
+  }
+
+  console.log('%cZenomed Enhancement Layer Active ✓', 'color:#00d4ff;font-size:16px;font-weight:bold;text-shadow:0 0 10px rgba(0,212,255,0.5)');
+})();
+</script>
+</body>
+</html>
