@@ -1,0 +1,6 @@
+##fileformat=VCFv4.2
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene Symbol">
+##INFO=<ID=STAR,Number=1,Type=String,Description="Star Allele/Diplotype">
+##INFO=<ID=RS,Number=1,Type=String,Description="RSID">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+16	31104878	rs9934438	G	A	.	PASS	GENE=VKORC1;STAR=resistant;RS=rs9934438

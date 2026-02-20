@@ -1,0 +1,6 @@
+##fileformat=VCFv4.2
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene Symbol">
+##INFO=<ID=STAR,Number=1,Type=String,Description="Star Allele/Diplotype">
+##INFO=<ID=RS,Number=1,Type=String,Description="RSID">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+10	94781859	rs12248560	C	T	.	PASS	GENE=CYP2C19;STAR=*1/*1;RS=rs12248560
